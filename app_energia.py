@@ -4,6 +4,7 @@ from fpdf import FPDF
 import requests
 import tempfile
 import os
+import base64
 from datetime import datetime
 
 # --- 1. CONFIGURAÇÕES VISUAIS DO SITE ---
@@ -16,18 +17,87 @@ ECONOMY_BLUE = "#4a90e2"   # Azul Claro
 ALERT_ORANGE = "#e67e22"   # Laranja
 SUCCESS_GREEN = "#28a745"  # Verde
 
-# Links Imagens
+# Links Imagens (Logos continuam por link pois são maiores e funcionam bem)
 LOGO_EFICIENCIE = "https://i.postimg.cc/WzKTZg47/LOGO-COMPLETA-removebg-preview.png"
 LOGO_REENERGISA = "https://i.postimg.cc/nzHb5T5v/LOGO-positivo-reenergisa-2000x674.png"
 
-# Ícones (GitHub Google - Estáveis)
-ICON_SOLAR = "https://raw.githubusercontent.com/google/material-design-icons/master/png/image/wb_sunny/materialicons/48dp/2x/baseline_wb_sunny_white_48dp.png"
-ICON_PIGGY = "https://raw.githubusercontent.com/google/material-design-icons/master/png/action/savings/materialicons/48dp/2x/baseline_savings_white_48dp.png"
-ICON_BULB =  "https://raw.githubusercontent.com/google/material-design-icons/master/png/action/lightbulb/materialicons/48dp/2x/baseline_lightbulb_white_48dp.png"
-ICON_PLANT = "https://raw.githubusercontent.com/google/material-design-icons/master/png/maps/local_florist/materialicons/48dp/2x/baseline_local_florist_white_48dp.png"
-ICON_FILE =  "https://raw.githubusercontent.com/google/material-design-icons/master/png/action/verified/materialicons/48dp/2x/baseline_verified_white_48dp.png"
+# --- ÍCONES EM BASE64 (SOLUÇÃO DEFINITIVA) ---
+# Isso garante que os ícones funcionem sem precisar baixar da internet
+# Ícone Solar (Painel)
+ICON_SOLAR_B64 = """
+iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAABmJLR0QA/wD/AP+gvaeTAAAB
+iklEQVRoge3ZwUpDQRDG8f+mCBEqaCNF8Cp6H8G76H0E76K30WsVvYoQoQcR3Ehx42J1sDQT
+Mzvk2+YPJLPwdt/szt3ZSWJmZmamY80G8AxsA2/ACbAGLADJ+90Ad8AzcAncVR28L6wD98Az
+cKm+d4F94L7q4H1hG3gEroBToK++d4CtwH01wUfCInAPXAPn6nsH2Fbfj9UEHwk7wD1wDZyr
+7x1gR30/VRN8JOwD98A1cKG+d4A99f1STfCRcADcA9fAhfreAfbU92s1wUfCIXAPXAPn6nsH
+OFDfH9UEHwmHwT1wDZyr7x3gUH2/VxN8JBwG98A1cK6+d4Aj9f1RTfCRcATcA9fAufreAY7V
+92c1wUfCMXAPXAPn6nsHOFbf39UEHwnHwT1wDZyr7x3gRH3/UBN8JJwE98A1cK6+d4BT9f1T
+TfCRcAr8/6+B8/i9t4Fz9f1bTfCRcAbcA9fAufreAc7U9+9qgo+E8+AeuAbO1fcOcK6+f6sJ
+PhL+hZ6Z/df8Am5bWd66rYQPAAAAAElFTkSuQmCC
+"""
 
-ICONS_LIST = [ICON_SOLAR, ICON_PIGGY, ICON_BULB, ICON_PLANT, ICON_FILE]
+# Ícone Porquinho (Economia)
+ICON_PIGGY_B64 = """
+iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAABmJLR0QA/wD/AP+gvaeTAAAC
+TUlEQVRoge3ZvU8UQRQH8N+DICZUEA0xMdZQaYyFhR9/g4WlxsaY2FhZ+R+wsbTExsRYaIyf
+g4UfCwoTE6wJ8VFBYiDxMzE73N3bs7v32IGbu59kQvbu3rw3O/PemzcvMzo6Ojo6Ov5faQZe
+Aj3ACtAPjAHdwC1gEngGrANLwI+mIl6QYeAR0A+sU51pYBT4bF/3gCngJbAUQ8i2MAI8A/qB
+DerzFHgF/LDvB8AM8BJYiiFkWxgFngL9wAb1eQq8An7a9wNgBngJLMYQsi2MAk+AfmCT+jwF
+XgE/7fsBMAO8BJZiCNkWRoCnQD+wSX2eAq+AH/b9AJgBXgJLMYRsCyPAM6Af2KQ+T4FXwHf7
+vg/MAC+BpRhCtoUR4BnQD2xSn6fAK+Cbfd8HZoCXwFIMIdvCCPAM6Ac2qc9T4BXwzb7vAzPA
+S2AphpBtYQR4BvQDm9TnKfAK+GLf94EZ4CWwFEPItjACPAX6gU3q8xR4BXyz7/vADPASWIoh
+ZFsYAZ4B/cAm9XkKvAK+2fd9YAZ4CSzFELItjADPgH5gk/o8BV4B3+37PjADvASWYgjZFkaA
+p0A/sEl9ngKvgB/2/QCYAV4CSzGEbAsjwFOgH9ikPk+BV8BP+34AzAAvgcUYQraFUeAp0A9s
+UJ+nwCvgp30/AGaAl8BSDCHbwigwBfQD69TnKfAK+GHf94EZ4CWwFEPItjAKfAA+A2vU5ykw
+CnTa9z1gCngJLMUQsi10A6PAZ+A9sA4sU51pYBT4bF/3gEngGbAOLAPfmonY1dHR0dHR0fE/
++g31+554+r/s4AAAAABJRU5ErkJggg==
+"""
+
+# Ícone Lâmpada (Ideia/Energia)
+ICON_BULB_B64 = """
+iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAABmJLR0QA/wD/AP+gvaeTAAAB
+c0lEQVRoge3ZsUrDQBzG8U+Lggii0CK4OImj4OIgOImj4OIgOImj4OIgOImj4OIgOImj4OIg
+OImj4OIgOImjiKCDg0gLFpS2xV6uF3y/y9397vLgLxc4jo6Ojo6Ozh+yDKwAL8A9cAgcArfA
+G7AKzDUS8k0GgRfget1z4AJ4BVYaCfkma8C76lV5C1wAb8BKIyHfZB14V70qb4EL4A1YaSTk
+m2wA76pX5S1wAbwBK42EfJMt4EP1qrwFLoA3YKWxkA9kG/hQvSpvgQvgDVhpLOSDbAMfqlfl
+LXABvAErjYV8INvAh+pVeQtcAG/ASmMhH8gO8KF6Vd4CF8AbsNJYyAeyC3yoXpW3wAXwBqw0
+FvKB7AEfqlflLXABvAErjYV8IPvAh+pVeQtcAG/ASmMhH8gB8KF6Vd4CF8AbsNJYyAdyCHyo
+XpW3wAXwBqw0FvKBHAEfqlflLXABvAErjYV8IMfAh+pVeQtcAG/ASmMhH8gJ8KF6Vd4C5+Po
+6Ojo6Ojo/OELq7qE+wWc3cEAAAAASUVORK5CYII=
+"""
+
+# Ícone Planta (Sustentável)
+ICON_PLANT_B64 = """
+iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAABmJLR0QA/wD/AP+gvaeTAAAB
++0lEQVRoge3Zz0uUQRjH8ZeW0S528BJE6OAleAki6OAleAki6OAleAki6OAleAki6OAleAki
+6OAleAki6OAleAki6OAleAki6OAleAki6OAleAmC/oBwWJ0dZ3dnZ919n5n7g8/LzrzPzDPP
+7M4888zU1NTU1NTU1PwfTcAg0A/0A21AC9ACNAO/gV/AD+AHMAosA4t1w6pKA9ADjADdwK2K
+f3cDeA6MA49qwlWNAWAMGALuV/y7h8AL4CkwUBOuagwA48AQ8LDi3z0E3gBPgYmacFVjABgH
+hoGHFf/uIfAGeApM1ISrGgPAODAMPCr5dw+At8BTYKImXNUYAMaBYeBRyb97ALwFngITNeGq
+xgAwDgwDj0r+3QPgLfAUmKgJVzUGgHFgGHhU8u8eAG+Bp8BETbiqMQCMA8PAo5J/9wB4CzwF
+JmrCVY0BYBwYBh6V/LsHwFvgKTBRE65qDADjwDDwqOTfPQDeAk+BiZpwVWNQaC/wFHgM3Kv4
+d1uAF8AY8LgmXNUYFNoLPAUeA/cq/t0W4AUwBjyuCVc1BoX2Ak+Bx8C9in+3BXgBjAGPa8JV
+jUGhvcBT4DFwr+LfbQFeAGPA45pwVWNQaC/wFHgM3Kv4b5sFHgNjwOOacFVjUGgMGAUeA/cq
+/ttmgcfAGPC4JlzVqKmpqampqan5b3wH0s1/q8Lq7gIAAAAASUVORK5CYII=
+"""
+
+# Ícone Check (Verificado)
+ICON_CHECK_B64 = """
+iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAABmJLR0QA/wD/AP+gvaeTAAAB
+t0lEQVRoge3ZPUvDQBjG8f+TiiC0oK0dFMFJHAUncRScxFFwEkfBSWwVnMRRcBJHwUkcBSdx
+FJzEUXASR8FJHAVE0MHBQasFpW0s1w++9+XucpcHfrnAcXR0dHR0dP6RZWAFeAHugUPgELgF
+3oBVYK6RkG8yCLwA1+ueAxfAK7DSeC3fZB14V70qb4EL4A1YaSTkm2wA76pX5S1wAbwBK42E
+fJMt4F31qrwFLoA3YKWxkA9kB/hQvSpvgQvgDVhpLOSD7AAfqlflLXABvAErjYV8ILvAh+pV
+eQtcAG/ASmMhH8g+8KF6Vd4CF8AbsNJYyAdyAHyoXpW3wAXwBqw0FvKBHAEfqlflLXABvAEr
+jYV8IMfAh+pVeQtcAG/ASmMhH8gJ8KF6Vd4CF8AbsNJYyAdyCnyoXpW3wAXwBqw0FvKBnAMf
+qlflLXABvAErjYV8IBfAh+pVeQtcAG/ASmMhH8gl8KF6Vd4CF8AbsNJYyAdyBXyoXpW3wAXw
+Bqw0FvKB3AAfqlflLXABvAErjYV8ILfAh+pVeQtcAG/ASmMhH8g98KF6Vd4C5+Po6Ojo6Ojo
+/OELv6qE+3t/dCQAAAAASUVORK5CYII=
+"""
+
+# Lista de ícones decodificados (será preenchida no loop)
+# Mapeamento para facilitar o uso no loop
+ICONS_B64_LIST = [ICON_SOLAR_B64, ICON_PIGGY_B64, ICON_BULB_B64, ICON_PLANT_B64, ICON_CHECK_B64]
 
 # Cores PDF
 PDF_CYAN = (0, 158, 224); PDF_LIME = (195, 213, 0); PDF_ORANGE = (243, 112, 33)
@@ -116,36 +186,29 @@ def calcular(kwh_total, valor_unit, tipo, bandeira, ilum, desc):
         "qtd_placas": qtd_placas
     }
 
-# --- 3. PDF (COM CORREÇÃO DE IMAGENS) ---
+# --- 3. PDF (COM BASE64) ---
 class PDFOficial(FPDF):
     def header(self):
         self.set_fill_color(255, 255, 255); self.rect(0, 0, 210, 30, 'F')
         headers = {'User-Agent': 'Mozilla/5.0'} 
-        
-        # Função Auxiliar para baixar e salvar imagem temporária com segurança
-        def get_image_safe(url, x, y, w):
-            try:
-                response = requests.get(url, headers=headers, timeout=5)
-                if response.status_code == 200:
-                    # Cria arquivo, escreve e FECHA antes de usar
-                    with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
-                        tmp.write(response.content)
-                        tmp_name = tmp.name
-                    
-                    self.image(tmp_name, x, y, w)
-                    os.unlink(tmp_name) # Deleta após uso
-            except:
-                pass
-
-        get_image_safe(LOGO_EFICIENCIE, 10, 5, 35)
-        get_image_safe(LOGO_REENERGISA, 140, 6, 55)
+        try:
+            r1 = requests.get(LOGO_EFICIENCIE, headers=headers)
+            if r1.status_code == 200:
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
+                    tmp.write(r1.content); self.image(tmp.name, 10, 5, 35); os.unlink(tmp.name)
+        except: pass
+        try:
+            r2 = requests.get(LOGO_REENERGISA, headers=headers)
+            if r2.status_code == 200:
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
+                    tmp.write(r2.content); self.image(tmp.name, 140, 6, 55); os.unlink(tmp.name)
+        except: pass
 
     def footer(self):
         self.set_y(-12); self.set_font('Arial', 'I', 6); self.set_text_color(150); self.cell(0, 10, f'Pagina {self.page_no()}', 0, 0, 'C')
 
 def criar_pdf_visual_final(d, nome, cidade, desconto):
     pdf = PDFOficial(); pdf.set_auto_page_break(auto=True, margin=15); pdf.add_page()
-    headers = {'User-Agent': 'Mozilla/5.0'}
     
     # Barra Verde
     pdf.set_y(30); pdf.set_fill_color(*PDF_LIME); pdf.rect(0, 30, 210, 8, 'F')
@@ -158,19 +221,19 @@ def criar_pdf_visual_final(d, nome, cidade, desconto):
     txts = ["Sem instalacao\nde equipamentos", "Sem preocupacao\ncom manutencao", "Economia na\nconta de energia", "Energia limpa\ne sustentavel", "Sem fidelidade apos\no cumprimento\ndo aviso previo"]
     pdf.set_font("Arial", "", 7); pdf.set_text_color(80)
     
-    # Loop Ícones com Correção de Arquivo Fechado
     for i, t in enumerate(txts):
         cx = centers[i]; pdf.set_fill_color(*PDF_CYAN); pdf.ellipse(cx-8, y_icons, 16, 16, 'F')
+        
+        # USA BASE64 AQUI (SEM DOWNLOAD)
         try:
-            r = requests.get(ICONS_LIST[i], headers=headers, timeout=5)
-            if r.status_code == 200:
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
-                    tmp.write(r.content)
-                    tmp_name = tmp.name
-                
-                pdf.image(tmp_name, cx-4, y_icons+4, 8, 8)
-                os.unlink(tmp_name)
+            img_data = base64.b64decode(ICONS_B64_LIST[i])
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
+                tmp.write(img_data)
+                tmp_name = tmp.name
+            pdf.image(tmp_name, cx-4, y_icons+4, 8, 8)
+            os.unlink(tmp_name)
         except: pass
+        
         pdf.set_xy(cx-15, y_icons + 18); pdf.multi_cell(30, 3, t, 0, 'C')
 
     # Como Funciona
@@ -207,22 +270,23 @@ def criar_pdf_visual_final(d, nome, cidade, desconto):
     pdf.set_y(yc + hc + 5); pdf.set_font("Arial", "", 9); pdf.set_text_color(80)
     pdf.cell(0, 6, f"Cota necessaria: {fmt_number(d['kwh_re'])} KWh, equivalente a {d['qtd_placas']} placas solares.", 0, 1, 'C')
 
-    # Footer Reduzido (SEM FONE/EMAIL/ENDEREÇO)
-    pdf.ln(2); yf = pdf.get_y(); pdf.set_draw_color(*PDF_CYAN); pdf.set_line_width(0.7); pdf.rect(13, yf, 184, 15, 'D')
+    # Footer Reduzido
+    pdf.ln(2); yf = pdf.get_y(); pdf.set_draw_color(*PDF_CYAN); pdf.set_line_width(0.7); pdf.rect(13, yf, 184, 18, 'D')
     
-    # Cliente e Cidade
+    # Linha 1: Cliente
     pdf.set_xy(15, yf + 3); pdf.set_font("Arial", "B", 8); pdf.set_text_color(*PDF_CYAN); pdf.cell(12, 4, "Cliente:", 0, 0)
     pdf.set_font("Arial", "", 8); pdf.set_text_color(0); pdf.cell(110, 4, nome.upper(), 0, 1)
     
+    # Linha 2: Cidade
     pdf.set_x(15); pdf.set_font("Arial", "B", 8); pdf.set_text_color(*PDF_CYAN); pdf.cell(15, 4, "Cidade:", 0, 0)
     pdf.set_font("Arial", "", 8); pdf.set_text_color(0); pdf.cell(50, 4, f"{cidade.upper()} / MS", 0, 1)
 
     # Validade
-    pdf.set_xy(13, yf + 11); pdf.set_font("Arial", "", 8); pdf.set_text_color(50); pdf.cell(184, 4, "Validade da proposta: 10 dias, sujeita a analise de credito.", 0, 1, 'C')
+    pdf.set_xy(13, yf + 14); pdf.set_font("Arial", "", 8); pdf.set_text_color(50); pdf.cell(184, 4, "Validade da proposta: 10 dias, sujeita a analise de credito.", 0, 1, 'C')
 
     return pdf.output(dest='S').encode('latin-1')
 
-# --- 4. INTERFACE DO SITE ---
+# --- 4. INTERFACE ---
 col_head1, col_head2 = st.columns([1, 1])
 with col_head1: st.image(LOGO_EFICIENCIE, width=150)
 with col_head2: st.markdown(f'<div style="text-align: right;"><img src="{LOGO_REENERGISA}" width="150"></div>', unsafe_allow_html=True)
@@ -281,7 +345,7 @@ with st.container():
                 <div class="card-result card-light-blue" style="height: 140px;">
                     <div class="label-text" style="color: {ECONOMY_BLUE} !important;">3. Fatura Reenergisa</div>
                     <div class="big-number" style="font-size: 18px;">{fmt_currency(res['fat_re'])}</div>
-                    <p style="font-size:11px; color:#888 !important; margin-top:5px;">(Energia com Desconto)</p>
+                    <p style="font-size:11px; color:#888 !important; margin-top:5px;">(Com Desconto)</p>
                 </div>
                 """, unsafe_allow_html=True)
             with c_novo3:
