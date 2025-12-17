@@ -20,7 +20,7 @@ SUCCESS_GREEN = "#28a745"  # Verde
 LOGO_EFICIENCIE = "https://i.postimg.cc/WzKTZg47/LOGO-COMPLETA-removebg-preview.png"
 LOGO_REENERGISA = "https://i.postimg.cc/nzHb5T5v/LOGO-positivo-reenergisa-2000x674.png"
 
-# Ícones Brancos (Google GitHub - Mais estáveis para PDF)
+# Ícones (GitHub Google - Estáveis)
 ICON_SOLAR = "https://raw.githubusercontent.com/google/material-design-icons/master/png/image/wb_sunny/materialicons/48dp/2x/baseline_wb_sunny_white_48dp.png"
 ICON_PIGGY = "https://raw.githubusercontent.com/google/material-design-icons/master/png/action/savings/materialicons/48dp/2x/baseline_savings_white_48dp.png"
 ICON_BULB =  "https://raw.githubusercontent.com/google/material-design-icons/master/png/action/lightbulb/materialicons/48dp/2x/baseline_lightbulb_white_48dp.png"
@@ -116,23 +116,30 @@ def calcular(kwh_total, valor_unit, tipo, bandeira, ilum, desc):
         "qtd_placas": qtd_placas
     }
 
-# --- 3. PDF ---
+# --- 3. PDF (COM CORREÇÃO DE IMAGENS) ---
 class PDFOficial(FPDF):
     def header(self):
         self.set_fill_color(255, 255, 255); self.rect(0, 0, 210, 30, 'F')
         headers = {'User-Agent': 'Mozilla/5.0'} 
-        try:
-            r1 = requests.get(LOGO_EFICIENCIE, headers=headers)
-            if r1.status_code == 200:
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
-                    tmp.write(r1.content); self.image(tmp.name, 10, 5, 35); os.unlink(tmp.name)
-        except: pass
-        try:
-            r2 = requests.get(LOGO_REENERGISA, headers=headers)
-            if r2.status_code == 200:
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
-                    tmp.write(r2.content); self.image(tmp.name, 140, 6, 55); os.unlink(tmp.name)
-        except: pass
+        
+        # Função Auxiliar para baixar e salvar imagem temporária com segurança
+        def get_image_safe(url, x, y, w):
+            try:
+                response = requests.get(url, headers=headers, timeout=5)
+                if response.status_code == 200:
+                    # Cria arquivo, escreve e FECHA antes de usar
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
+                        tmp.write(response.content)
+                        tmp_name = tmp.name
+                    
+                    self.image(tmp_name, x, y, w)
+                    os.unlink(tmp_name) # Deleta após uso
+            except:
+                pass
+
+        get_image_safe(LOGO_EFICIENCIE, 10, 5, 35)
+        get_image_safe(LOGO_REENERGISA, 140, 6, 55)
+
     def footer(self):
         self.set_y(-12); self.set_font('Arial', 'I', 6); self.set_text_color(150); self.cell(0, 10, f'Pagina {self.page_no()}', 0, 0, 'C')
 
@@ -150,13 +157,19 @@ def criar_pdf_visual_final(d, nome, cidade, desconto):
     y_icons = pdf.get_y() + 2; centers = [25, 65, 105, 145, 185]
     txts = ["Sem instalacao\nde equipamentos", "Sem preocupacao\ncom manutencao", "Economia na\nconta de energia", "Energia limpa\ne sustentavel", "Sem fidelidade apos\no cumprimento\ndo aviso previo"]
     pdf.set_font("Arial", "", 7); pdf.set_text_color(80)
+    
+    # Loop Ícones com Correção de Arquivo Fechado
     for i, t in enumerate(txts):
         cx = centers[i]; pdf.set_fill_color(*PDF_CYAN); pdf.ellipse(cx-8, y_icons, 16, 16, 'F')
         try:
             r = requests.get(ICONS_LIST[i], headers=headers, timeout=5)
             if r.status_code == 200:
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
-                    tmp.write(r.content); pdf.image(tmp.name, cx-4, y_icons+4, 8, 8); os.unlink(tmp.name)
+                    tmp.write(r.content)
+                    tmp_name = tmp.name
+                
+                pdf.image(tmp_name, cx-4, y_icons+4, 8, 8)
+                os.unlink(tmp_name)
         except: pass
         pdf.set_xy(cx-15, y_icons + 18); pdf.multi_cell(30, 3, t, 0, 'C')
 
@@ -194,23 +207,22 @@ def criar_pdf_visual_final(d, nome, cidade, desconto):
     pdf.set_y(yc + hc + 5); pdf.set_font("Arial", "", 9); pdf.set_text_color(80)
     pdf.cell(0, 6, f"Cota necessaria: {fmt_number(d['kwh_re'])} KWh, equivalente a {d['qtd_placas']} placas solares.", 0, 1, 'C')
 
-    # Footer Reduzido
-    pdf.ln(2); yf = pdf.get_y(); pdf.set_draw_color(*PDF_CYAN); pdf.set_line_width(0.7); pdf.rect(13, yf, 184, 18, 'D')
+    # Footer Reduzido (SEM FONE/EMAIL/ENDEREÇO)
+    pdf.ln(2); yf = pdf.get_y(); pdf.set_draw_color(*PDF_CYAN); pdf.set_line_width(0.7); pdf.rect(13, yf, 184, 15, 'D')
     
-    # Linha 1: Cliente
+    # Cliente e Cidade
     pdf.set_xy(15, yf + 3); pdf.set_font("Arial", "B", 8); pdf.set_text_color(*PDF_CYAN); pdf.cell(12, 4, "Cliente:", 0, 0)
     pdf.set_font("Arial", "", 8); pdf.set_text_color(0); pdf.cell(110, 4, nome.upper(), 0, 1)
     
-    # Linha 2: Cidade
     pdf.set_x(15); pdf.set_font("Arial", "B", 8); pdf.set_text_color(*PDF_CYAN); pdf.cell(15, 4, "Cidade:", 0, 0)
     pdf.set_font("Arial", "", 8); pdf.set_text_color(0); pdf.cell(50, 4, f"{cidade.upper()} / MS", 0, 1)
 
     # Validade
-    pdf.set_xy(13, yf + 14); pdf.set_font("Arial", "", 8); pdf.set_text_color(50); pdf.cell(184, 4, "Validade da proposta: 10 dias, sujeita a analise de credito.", 0, 1, 'C')
+    pdf.set_xy(13, yf + 11); pdf.set_font("Arial", "", 8); pdf.set_text_color(50); pdf.cell(184, 4, "Validade da proposta: 10 dias, sujeita a analise de credito.", 0, 1, 'C')
 
     return pdf.output(dest='S').encode('latin-1')
 
-# --- 4. INTERFACE ---
+# --- 4. INTERFACE DO SITE ---
 col_head1, col_head2 = st.columns([1, 1])
 with col_head1: st.image(LOGO_EFICIENCIE, width=150)
 with col_head2: st.markdown(f'<div style="text-align: right;"><img src="{LOGO_REENERGISA}" width="150"></div>', unsafe_allow_html=True)
@@ -245,23 +257,23 @@ with st.container():
             st.write("---")
             st.markdown("### 📊 Resultado da Simulação")
             
-            # CARD 1: Fatura Atual
+            # CARD 1: Fatura Atual (Topo)
             st.markdown(f"""
             <div class="card-result card-orange">
                 <div class="label-text" style="color: {ALERT_ORANGE} !important;">1. Fatura Atual Energisa</div>
                 <div class="big-number">{fmt_currency(res['total_atual'])}</div>
-                <p style="font-size:12px; margin:0; color:#888 !important;">Valor total pago hoje</p>
+                <p style="font-size:12px; margin:0; color:#888 !important;">(Sem Desconto)</p>
             </div>
             """, unsafe_allow_html=True)
 
-            # CARDS DETALHADOS (LADO A LADO)
+            # LINHA DETALHADA (Energisa Residual | Reenergisa | Novo Total)
             c_novo1, c_novo2, c_novo3 = st.columns(3)
             with c_novo1:
                 st.markdown(f"""
                 <div class="card-result card-blue" style="height: 140px;">
-                    <div class="label-text" style="color: {PRIMARY_BLUE} !important;">2. Fatura Energisa</div>
+                    <div class="label-text" style="color: {PRIMARY_BLUE} !important;">2. Fatura Energisa (Residual)</div>
                     <div class="big-number" style="font-size: 18px;">{fmt_currency(res['fat_en'])}</div>
-                    <p style="font-size:11px; color:#888 !important;">(Taxas + Ilum)</p>
+                    <p style="font-size:11px; color:#888 !important; margin-top:5px;">(Taxa Mínima + Ilum + Bandeira)</p>
                 </div>
                 """, unsafe_allow_html=True)
             with c_novo2:
@@ -269,7 +281,7 @@ with st.container():
                 <div class="card-result card-light-blue" style="height: 140px;">
                     <div class="label-text" style="color: {ECONOMY_BLUE} !important;">3. Fatura Reenergisa</div>
                     <div class="big-number" style="font-size: 18px;">{fmt_currency(res['fat_re'])}</div>
-                    <p style="font-size:11px; color:#888 !important;">(Com Desconto)</p>
+                    <p style="font-size:11px; color:#888 !important; margin-top:5px;">(Energia com Desconto)</p>
                 </div>
                 """, unsafe_allow_html=True)
             with c_novo3:
@@ -277,11 +289,11 @@ with st.container():
                 <div class="card-result card-blue" style="height: 140px; border-left: 5px solid {SUCCESS_GREEN};">
                     <div class="label-text" style="color: {SUCCESS_GREEN} !important;">4. Novo Total (2+3)</div>
                     <div class="big-number" style="font-size: 18px;">{fmt_currency(res['total_novo'])}</div>
-                    <p style="font-size:11px; color:#888 !important;">Total a Pagar</p>
+                    <p style="font-size:11px; color:#888 !important; margin-top:5px;">Total a Pagar</p>
                 </div>
                 """, unsafe_allow_html=True)
 
-            # CARD ECONOMIA
+            # CARD ECONOMIA FINAL
             st.markdown(f"""
             <div class="card-result card-green">
                 <div style="font-size: 16px; margin-bottom: 5px; color: #ffffff !important;">💰 Economia Estimada</div>
