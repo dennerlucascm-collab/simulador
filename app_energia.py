@@ -4,109 +4,36 @@ from fpdf import FPDF
 import requests
 import tempfile
 import os
-import base64
 from datetime import datetime
 
-# --- 1. CONFIGURAÇÕES VISUAIS DO SITE ---
+# --- 1. CONFIGURAÇÕES VISUAIS ---
 st.set_page_config(page_title="Simulador Reenergisa", page_icon="☀️", layout="centered")
 
-# Cores
-BG_COLOR = "#fdf1db"       # Bege
-PRIMARY_BLUE = "#26628d"   # Azul Escuro
-ECONOMY_BLUE = "#4a90e2"   # Azul Claro
-ALERT_ORANGE = "#e67e22"   # Laranja
-SUCCESS_GREEN = "#28a745"  # Verde
+BG_COLOR = "#fdf1db"
+PRIMARY_BLUE = "#26628d"
+ECONOMY_BLUE = "#4a90e2"
+ALERT_ORANGE = "#e67e22"
+SUCCESS_GREEN = "#28a745"
 
-# Links Imagens (Logos continuam por link pois são maiores e funcionam bem)
 LOGO_EFICIENCIE = "https://i.postimg.cc/WzKTZg47/LOGO-COMPLETA-removebg-preview.png"
 LOGO_REENERGISA = "https://i.postimg.cc/nzHb5T5v/LOGO-positivo-reenergisa-2000x674.png"
 
-# --- ÍCONES EM BASE64 (SOLUÇÃO DEFINITIVA) ---
-# Isso garante que os ícones funcionem sem precisar baixar da internet
-# Ícone Solar (Painel)
-ICON_SOLAR_B64 = """
-iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAABmJLR0QA/wD/AP+gvaeTAAAB
-iklEQVRoge3ZwUpDQRDG8f+mCBEqaCNF8Cp6H8G76H0E76K30WsVvYoQoQcR3Ehx42J1sDQT
-Mzvk2+YPJLPwdt/szt3ZSWJmZmamY80G8AxsA2/ACbAGLADJ+90Ad8AzcAncVR28L6wD98Az
-cKm+d4F94L7q4H1hG3gEroBToK++d4CtwH01wUfCInAPXAPn6nsH2Fbfj9UEHwk7wD1wDZyr
-7x1gR30/VRN8JOwD98A1cKG+d4A99f1STfCRcADcA9fAhfreAfbU92s1wUfCIXAPXAPn6nsH
-OFDfH9UEHwmHwT1wDZyr7x3gUH2/VxN8JBwG98A1cK6+d4Aj9f1RTfCRcATcA9fAufreAY7V
-92c1wUfCMXAPXAPn6nsHOFbf39UEHwnHwT1wDZyr7x3gRH3/UBN8JJwE98A1cK6+d4BT9f1T
-TfCRcAr8/6+B8/i9t4Fz9f1bTfCRcAbcA9fAufreAc7U9+9qgo+E8+AeuAbO1fcOcK6+f6sJ
-PhL+hZ6Z/df8Am5bWd66rYQPAAAAAElFTkSuQmCC
-"""
+# Ícones Icons8 (Links diretos para PNG branco)
+ICON_SOLAR = "https://img.icons8.com/ios-filled/50/ffffff/solar-panel.png"
+ICON_PIGGY = "https://img.icons8.com/ios-filled/50/ffffff/money-box.png"
+ICON_BULB =  "https://img.icons8.com/ios-filled/50/ffffff/light-on.png"
+ICON_PLANT = "https://img.icons8.com/ios-filled/50/ffffff/potted-plant.png"
+ICON_FILE =  "https://img.icons8.com/ios-filled/50/ffffff/checked--v1.png"
 
-# Ícone Porquinho (Economia)
-ICON_PIGGY_B64 = """
-iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAABmJLR0QA/wD/AP+gvaeTAAAC
-TUlEQVRoge3ZvU8UQRQH8N+DICZUEA0xMdZQaYyFhR9/g4WlxsaY2FhZ+R+wsbTExsRYaIyf
-g4UfCwoTE6wJ8VFBYiDxMzE73N3bs7v32IGbu59kQvbu3rw3O/PemzcvMzo6Ojo6Ov5faQZe
-Aj3ACtAPjAHdwC1gEngGrANLwI+mIl6QYeAR0A+sU51pYBT4bF/3gCngJbAUQ8i2MAI8A/qB
-DerzFHgF/LDvB8AM8BJYiiFkWxgFngL9wAb1eQq8An7a9wNgBngJLMYQsi2MAk+AfmCT+jwF
-XgE/7fsBMAO8BJZiCNkWRoCnQD+wSX2eAq+AH/b9AJgBXgJLMYRsCyPAM6Af2KQ+T4FXwHf7
-vg/MAC+BpRhCtoUR4BnQD2xSn6fAK+Cbfd8HZoCXwFIMIdvCCPAM6Ac2qc9T4BXwzb7vAzPA
-S2AphpBtYQR4BvQDm9TnKfAK+GLf94EZ4CWwFEPItjACPAX6gU3q8xR4BXyz7/vADPASWIoh
-ZFsYAZ4B/cAm9XkKvAK+2fd9YAZ4CSzFELItjADPgH5gk/o8BV4B3+37PjADvASWYgjZFkaA
-p0A/sEl9ngKvgB/2/QCYAV4CSzGEbAsjwFOgH9ikPk+BV8BP+34AzAAvgcUYQraFUeAp0A9s
-UJ+nwCvgp30/AGaAl8BSDCHbwigwBfQD69TnKfAK+GHf94EZ4CWwFEPItjAKfAA+A2vU5ykw
-CnTa9z1gCngJLMUQsi10A6PAZ+A9sA4sU51pYBT4bF/3gEngGbAOLAPfmonY1dHR0dHR0fE/
-+g31+554+r/s4AAAAABJRU5ErkJggg==
-"""
+ICONS_LIST = [ICON_SOLAR, ICON_PIGGY, ICON_BULB, ICON_PLANT, ICON_FILE]
+ICONS_FALLBACK = ["S", "$", "!", "Y", "V"] # Letras caso a imagem falhe
 
-# Ícone Lâmpada (Ideia/Energia)
-ICON_BULB_B64 = """
-iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAABmJLR0QA/wD/AP+gvaeTAAAB
-c0lEQVRoge3ZsUrDQBzG8U+Lggii0CK4OImj4OIgOImj4OIgOImj4OIgOImj4OIgOImj4OIg
-OImj4OIgOImjiKCDg0gLFpS2xV6uF3y/y9397vLgLxc4jo6Ojo6Ozh+yDKwAL8A9cAgcArfA
-G7AKzDUS8k0GgRfget1z4AJ4BVYaCfkma8C76lV5C1wAb8BKIyHfZB14V70qb4EL4A1YaSTk
-m2wA76pX5S1wAbwBK42EfJMt4EP1qrwFLoA3YKWxkA9kG/hQvSpvgQvgDVhpLOSDbAMfqlfl
-LXABvAErjYV8INvAh+pVeQtcAG/ASmMhH8gO8KF6Vd4CF8AbsNJYyAeyC3yoXpW3wAXwBqw0
-FvKB7AEfqlflLXABvAErjYV8IPvAh+pVeQtcAG/ASmMhH8gB8KF6Vd4CF8AbsNJYyAdyCHyo
-XpW3wAXwBqw0FvKBHAEfqlflLXABvAErjYV8IMfAh+pVeQtcAG/ASmMhH8gJ8KF6Vd4C5+Po
-6Ojo6Ojo/OELq7qE+wWc3cEAAAAASUVORK5CYII=
-"""
-
-# Ícone Planta (Sustentável)
-ICON_PLANT_B64 = """
-iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAABmJLR0QA/wD/AP+gvaeTAAAB
-+0lEQVRoge3Zz0uUQRjH8ZeW0S528BJE6OAleAki6OAleAki6OAleAki6OAleAki6OAleAki
-6OAleAki6OAleAki6OAleAki6OAleAki6OAleAmC/oBwWJ0dZ3dnZ919n5n7g8/LzrzPzDPP
-7M4888zU1NTU1NTU1PwfTcAg0A/0A21AC9ACNAO/gV/AD+AHMAosA4t1w6pKA9ADjADdwK2K
-f3cDeA6MA49qwlWNAWAMGALuV/y7h8AL4CkwUBOuagwA48AQ8LDi3z0E3gBPgYmacFVjABgH
-hoGHFf/uIfAGeApM1ISrGgPAODAMPCr5dw+At8BTYKImXNUYAMaBYeBRyb97ALwFngITNeGq
-xgAwDgwDj0r+3QPgLfAUmKgJVzUGgHFgGHhU8u8eAG+Bp8BETbiqMQCMA8PAo5J/9wB4CzwF
-JmrCVY0BYBwYBh6V/LsHwFvgKTBRE65qDADjwDDwqOTfPQDeAk+BiZpwVWNQaC/wFHgM3Kv4
-d1uAF8AY8LgmXNUYFNoLPAUeA/cq/t0W4AUwBjyuCVc1BoX2Ak+Bx8C9in+3BXgBjAGPa8JV
-jUGhvcBT4DFwr+LfbQFeAGPA45pwVWNQaC/wFHgM3Kv4b5sFHgNjwOOacFVjUGgMGAUeA/cq
-/ttmgcfAGPC4JlzVqKmpqampqan5b3wH0s1/q8Lq7gIAAAAASUVORK5CYII=
-"""
-
-# Ícone Check (Verificado)
-ICON_CHECK_B64 = """
-iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAABmJLR0QA/wD/AP+gvaeTAAAB
-t0lEQVRoge3ZPUvDQBjG8f+TiiC0oK0dFMFJHAUncRScxFFwEkfBSWwVnMRRcBJHwUkcBSdx
-FJzEUXASR8FJHAVE0MHBQasFpW0s1w++9+XucpcHfrnAcXR0dHR0dP6RZWAFeAHugUPgELgF
-3oBVYK6RkG8yCLwA1+ueAxfAK7DSeC3fZB14V70qb4EL4A1YaSTkm2wA76pX5S1wAbwBK42E
-fJMt4F31qrwFLoA3YKWxkA9kB/hQvSpvgQvgDVhpLOSD7AAfqlflLXABvAErjYV8ILvAh+pV
-eQtcAG/ASmMhH8g+8KF6Vd4CF8AbsNJYyAdyAHyoXpW3wAXwBqw0FvKBHAEfqlflLXABvAEr
-jYV8IMfAh+pVeQtcAG/ASmMhH8gJ8KF6Vd4CF8AbsNJYyAdyCnyoXpW3wAXwBqw0FvKBnAMf
-qlflLXABvAErjYV8IBfAh+pVeQtcAG/ASmMhH8gl8KF6Vd4CF8AbsNJYyAdyBXyoXpW3wAXw
-Bqw0FvKB3AAfqlflLXABvAErjYV8ILfAh+pVeQtcAG/ASmMhH8g98KF6Vd4C5+Po6Ojo6Ojo
-/OELv6qE+3t/dCQAAAAASUVORK5CYII=
-"""
-
-# Lista de ícones decodificados (será preenchida no loop)
-# Mapeamento para facilitar o uso no loop
-ICONS_B64_LIST = [ICON_SOLAR_B64, ICON_PIGGY_B64, ICON_BULB_B64, ICON_PLANT_B64, ICON_CHECK_B64]
-
-# Cores PDF
 PDF_CYAN = (0, 158, 224); PDF_LIME = (195, 213, 0); PDF_ORANGE = (243, 112, 33)
 
-# Formatadores
 def fmt_currency(val): return f"R$ {val:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 def fmt_number(val): return f"{val:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
-# CSS Personalizado
+# CSS Reforçado
 st.markdown(f"""
     <style>
     .stApp {{ background-color: {BG_COLOR}; }}
@@ -114,25 +41,19 @@ st.markdown(f"""
     .stTextInput input, .stNumberInput input, .stSelectbox div {{ color: {PRIMARY_BLUE} !important; background-color: #ffffff !important; }}
     
     div.stButton > button {{ 
-        background-color: {PRIMARY_BLUE} !important; 
-        color: #ffffff !important; 
+        background-color: {PRIMARY_BLUE} !important; color: #ffffff !important; 
         border-radius: 8px; height: 50px; font-weight: bold; text-transform: uppercase; border: none; width: 100%;
     }}
     div.stButton > button p {{ color: #ffffff !important; }}
     
-    /* CARDS */
     .card-result {{ padding: 15px; border-radius: 10px; text-align: center; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); background-color: white; }}
-    
     .card-orange {{ border-left: 5px solid {ALERT_ORANGE}; }}
     .card-blue {{ border-left: 5px solid {PRIMARY_BLUE}; }}
     .card-light-blue {{ border-left: 5px solid {ECONOMY_BLUE}; }}
     
-    /* CARD ECONOMIA (VERDE) */
-    .card-green {{ 
-        background-color: {SUCCESS_GREEN}; 
-        color: #ffffff !important; 
-    }}
-    .card-green div, .card-green span {{ color: #ffffff !important; }}
+    /* Card Verde com Texto Branco Forçado */
+    .card-green {{ background-color: {SUCCESS_GREEN} !important; }}
+    .card-green div, .card-green h2, .card-green p, .card-green span {{ color: #ffffff !important; }}
     
     .big-number {{ font-size: 20px; font-weight: bold; margin: 5px 0; color: #333 !important; }}
     .label-text {{ font-size: 12px; font-weight: bold; text-transform: uppercase; color: #666 !important; }}
@@ -141,7 +62,6 @@ st.markdown(f"""
 
 # --- 2. CÁLCULO ---
 def calcular(kwh_total, valor_unit, tipo, bandeira, ilum, desc):
-    # Tratamento None
     kwh_total = kwh_total if kwh_total else 0.0
     valor_unit = valor_unit if valor_unit else 0.0
     bandeira = bandeira if bandeira else 0.0
@@ -158,57 +78,44 @@ def calcular(kwh_total, valor_unit, tipo, bandeira, ilum, desc):
     qtd_placas = int(kwh_re / 52)
     if qtd_placas < 1 and kwh_re > 0: qtd_placas = 1
 
-    # Fatura Atual Completa
     total_atual = (kwh_total * valor_unit) + bandeira + ilum
-    
-    # Nova Fatura (Separada)
-    # 1. Parte Energisa (Custo Disp + Bandeira + Ilum)
     fat_en = (kwh_res * valor_unit) + bandeira + ilum
-    
-    # 2. Parte Reenergisa (Consumo Injetado com Desconto)
     val_re_unit = valor_unit * (1 - (desc/100))
     fat_re = kwh_re * val_re_unit
-    
-    # 3. Total Novo
     total_novo = fat_en + fat_re
-    
-    # Economia
     econ_mes = total_atual - total_novo
     
     return {
-        "total_atual": total_atual, 
-        "fat_en": fat_en,          # Parte Energisa
-        "fat_re": fat_re,          # Parte Reenergisa
-        "total_novo": total_novo,  # Soma das duas
-        "econ_mes": econ_mes, 
-        "econ_ano": econ_mes * 12,
-        "kwh_re": kwh_re, 
-        "qtd_placas": qtd_placas
+        "total_atual": total_atual, "fat_en": fat_en, "fat_re": fat_re,
+        "total_novo": total_novo, "econ_mes": econ_mes, "econ_ano": econ_mes * 12,
+        "kwh_re": kwh_re, "qtd_placas": qtd_placas
     }
 
-# --- 3. PDF (COM BASE64) ---
+# --- 3. PDF ---
 class PDFOficial(FPDF):
     def header(self):
         self.set_fill_color(255, 255, 255); self.rect(0, 0, 210, 30, 'F')
-        headers = {'User-Agent': 'Mozilla/5.0'} 
-        try:
-            r1 = requests.get(LOGO_EFICIENCIE, headers=headers)
-            if r1.status_code == 200:
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
-                    tmp.write(r1.content); self.image(tmp.name, 10, 5, 35); os.unlink(tmp.name)
-        except: pass
-        try:
-            r2 = requests.get(LOGO_REENERGISA, headers=headers)
-            if r2.status_code == 200:
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
-                    tmp.write(r2.content); self.image(tmp.name, 140, 6, 55); os.unlink(tmp.name)
-        except: pass
+        # User-Agent de navegador real para evitar bloqueio
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+        
+        def safe_image(url, x, y, w):
+            try:
+                r = requests.get(url, headers=headers, timeout=5)
+                if r.status_code == 200:
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
+                        tmp.write(r.content); tmp_name = tmp.name
+                    self.image(tmp_name, x, y, w); os.unlink(tmp_name)
+            except: pass
+
+        safe_image(LOGO_EFICIENCIE, 10, 5, 35)
+        safe_image(LOGO_REENERGISA, 140, 6, 55)
 
     def footer(self):
         self.set_y(-12); self.set_font('Arial', 'I', 6); self.set_text_color(150); self.cell(0, 10, f'Pagina {self.page_no()}', 0, 0, 'C')
 
 def criar_pdf_visual_final(d, nome, cidade, desconto):
     pdf = PDFOficial(); pdf.set_auto_page_break(auto=True, margin=15); pdf.add_page()
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
     
     # Barra Verde
     pdf.set_y(30); pdf.set_fill_color(*PDF_LIME); pdf.rect(0, 30, 210, 8, 'F')
@@ -219,21 +126,33 @@ def criar_pdf_visual_final(d, nome, cidade, desconto):
     pdf.cell(0, 6, "Conheca os beneficios da Geracao Compartilhada:", 0, 1, 'C')
     y_icons = pdf.get_y() + 2; centers = [25, 65, 105, 145, 185]
     txts = ["Sem instalacao\nde equipamentos", "Sem preocupacao\ncom manutencao", "Economia na\nconta de energia", "Energia limpa\ne sustentavel", "Sem fidelidade apos\no cumprimento\ndo aviso previo"]
-    pdf.set_font("Arial", "", 7); pdf.set_text_color(80)
     
+    pdf.set_font("Arial", "", 7); pdf.set_text_color(80)
     for i, t in enumerate(txts):
-        cx = centers[i]; pdf.set_fill_color(*PDF_CYAN); pdf.ellipse(cx-8, y_icons, 16, 16, 'F')
+        cx = centers[i]
+        # Círculo
+        pdf.set_fill_color(*PDF_CYAN); pdf.ellipse(cx-8, y_icons, 16, 16, 'F')
         
-        # USA BASE64 AQUI (SEM DOWNLOAD)
+        # Tenta baixar imagem, senão desenha letra (Fallback)
+        success = False
         try:
-            img_data = base64.b64decode(ICONS_B64_LIST[i])
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
-                tmp.write(img_data)
-                tmp_name = tmp.name
-            pdf.image(tmp_name, cx-4, y_icons+4, 8, 8)
-            os.unlink(tmp_name)
+            r = requests.get(ICONS_LIST[i], headers=headers, timeout=4)
+            if r.status_code == 200:
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
+                    tmp.write(r.content); tmp_name = tmp.name
+                pdf.image(tmp_name, cx-4, y_icons+4, 8, 8); os.unlink(tmp_name)
+                success = True
         except: pass
         
+        # Se falhou, coloca uma letra branca no meio
+        if not success:
+            pdf.set_xy(cx-8, y_icons+4)
+            pdf.set_text_color(255, 255, 255)
+            pdf.set_font("Arial", "B", 10)
+            pdf.cell(16, 8, ICONS_FALLBACK[i], 0, 0, 'C')
+            pdf.set_text_color(80) # Volta cor normal
+            pdf.set_font("Arial", "", 7)
+
         pdf.set_xy(cx-15, y_icons + 18); pdf.multi_cell(30, 3, t, 0, 'C')
 
     # Como Funciona
@@ -244,12 +163,12 @@ def criar_pdf_visual_final(d, nome, cidade, desconto):
         cx = sx + (i * (bw + gp)); pdf.set_fill_color(*PDF_CYAN); pdf.rect(cx, y_steps, bw, 22, 'F')
         pdf.set_xy(cx + 2, y_steps + 3); pdf.multi_cell(bw - 4, 3.5, t, 0, 'C')
 
-    # Titulo
+    # Titulo e Dados
     yp = y_steps + 30; pdf.set_xy(0, yp); pdf.set_font("Arial", "B", 12); pdf.set_text_color(*PDF_CYAN); pdf.cell(0, 8, "Proposta Comercial de Locacao de Usina Fotovoltaica", 0, 1, 'C')
     yb = pdf.get_y() + 2; pdf.set_draw_color(*PDF_CYAN); pdf.set_line_width(0.5); pdf.rect(13, yb, 184, 12)
     pdf.set_xy(15, yb + 3); pdf.set_font("Arial", "", 9); pdf.set_text_color(*PDF_CYAN); pdf.cell(40, 5, "N cliente ENERGISA MATO", 0, 1)
 
-    # Cards Coloridos PDF
+    # Cards
     yc = yb + 16; wc = 60; hc = 28; xc = 13
     # Media
     pdf.set_draw_color(*PDF_ORANGE); pdf.set_line_width(1); pdf.rect(xc, yc, wc, hc)
@@ -270,18 +189,12 @@ def criar_pdf_visual_final(d, nome, cidade, desconto):
     pdf.set_y(yc + hc + 5); pdf.set_font("Arial", "", 9); pdf.set_text_color(80)
     pdf.cell(0, 6, f"Cota necessaria: {fmt_number(d['kwh_re'])} KWh, equivalente a {d['qtd_placas']} placas solares.", 0, 1, 'C')
 
-    # Footer Reduzido
+    # Footer
     pdf.ln(2); yf = pdf.get_y(); pdf.set_draw_color(*PDF_CYAN); pdf.set_line_width(0.7); pdf.rect(13, yf, 184, 18, 'D')
-    
-    # Linha 1: Cliente
     pdf.set_xy(15, yf + 3); pdf.set_font("Arial", "B", 8); pdf.set_text_color(*PDF_CYAN); pdf.cell(12, 4, "Cliente:", 0, 0)
     pdf.set_font("Arial", "", 8); pdf.set_text_color(0); pdf.cell(110, 4, nome.upper(), 0, 1)
-    
-    # Linha 2: Cidade
     pdf.set_x(15); pdf.set_font("Arial", "B", 8); pdf.set_text_color(*PDF_CYAN); pdf.cell(15, 4, "Cidade:", 0, 0)
     pdf.set_font("Arial", "", 8); pdf.set_text_color(0); pdf.cell(50, 4, f"{cidade.upper()} / MS", 0, 1)
-
-    # Validade
     pdf.set_xy(13, yf + 14); pdf.set_font("Arial", "", 8); pdf.set_text_color(50); pdf.cell(184, 4, "Validade da proposta: 10 dias, sujeita a analise de credito.", 0, 1, 'C')
 
     return pdf.output(dest='S').encode('latin-1')
@@ -305,7 +218,6 @@ with st.container():
     c4, c5 = st.columns(2)
     kwh = c4.number_input("Consumo (kWh)", min_value=0.0, value=None, placeholder="Digite o kWh...")
     val_unit = c5.number_input("Valor Unitário (R$)", min_value=0.0, value=1.1540, format="%.4f")
-    
     c6, c7, c8 = st.columns(3)
     ban = c6.number_input("Bandeiras (R$)", min_value=0.0, value=None, placeholder="R$ 0,00")
     ilum = c7.number_input("Ilum. Púb. (R$)", min_value=0.0, value=None, placeholder="R$ 0,00")
@@ -317,11 +229,10 @@ with st.container():
             st.error("Por favor, informe o consumo (kWh).")
         else:
             res = calcular(kwh, val_unit, tipo, ban, ilum, desc)
-            
             st.write("---")
             st.markdown("### 📊 Resultado da Simulação")
             
-            # CARD 1: Fatura Atual (Topo)
+            # Card 1
             st.markdown(f"""
             <div class="card-result card-orange">
                 <div class="label-text" style="color: {ALERT_ORANGE} !important;">1. Fatura Atual Energisa</div>
@@ -330,9 +241,9 @@ with st.container():
             </div>
             """, unsafe_allow_html=True)
 
-            # LINHA DETALHADA (Energisa Residual | Reenergisa | Novo Total)
-            c_novo1, c_novo2, c_novo3 = st.columns(3)
-            with c_novo1:
+            # Detalhes
+            c1, c2, c3 = st.columns(3)
+            with c1:
                 st.markdown(f"""
                 <div class="card-result card-blue" style="height: 140px;">
                     <div class="label-text" style="color: {PRIMARY_BLUE} !important;">2. Fatura Energisa (Residual)</div>
@@ -340,15 +251,15 @@ with st.container():
                     <p style="font-size:11px; color:#888 !important; margin-top:5px;">(Taxa Mínima + Ilum + Bandeira)</p>
                 </div>
                 """, unsafe_allow_html=True)
-            with c_novo2:
+            with c2:
                 st.markdown(f"""
                 <div class="card-result card-light-blue" style="height: 140px;">
                     <div class="label-text" style="color: {ECONOMY_BLUE} !important;">3. Fatura Reenergisa</div>
                     <div class="big-number" style="font-size: 18px;">{fmt_currency(res['fat_re'])}</div>
-                    <p style="font-size:11px; color:#888 !important; margin-top:5px;">(Com Desconto)</p>
+                    <p style="font-size:11px; color:#888 !important; margin-top:5px;">(Energia com Desconto)</p>
                 </div>
                 """, unsafe_allow_html=True)
-            with c_novo3:
+            with c3:
                  st.markdown(f"""
                 <div class="card-result card-blue" style="height: 140px; border-left: 5px solid {SUCCESS_GREEN};">
                     <div class="label-text" style="color: {SUCCESS_GREEN} !important;">4. Novo Total (2+3)</div>
@@ -357,7 +268,7 @@ with st.container():
                 </div>
                 """, unsafe_allow_html=True)
 
-            # CARD ECONOMIA FINAL
+            # Economia (Verde)
             st.markdown(f"""
             <div class="card-result card-green">
                 <div style="font-size: 16px; margin-bottom: 5px; color: #ffffff !important;">💰 Economia Estimada</div>
@@ -366,7 +277,6 @@ with st.container():
             </div>
             """, unsafe_allow_html=True)
 
-            # DADOS TÉCNICOS
             c_tec1, c_tec2 = st.columns(2)
             with c_tec1: st.info(f"**Cota Necessária:** {fmt_number(res['kwh_re'])} kWh")
             with c_tec2: st.info(f"**Equipamento:** {res['qtd_placas']} Placas")
