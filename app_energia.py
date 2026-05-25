@@ -7,7 +7,7 @@ import os
 from datetime import datetime
 
 # --- 1. CONFIGURAÇÕES VISUAIS ---
-st.set_page_config(page_title="Simulador Reenergisa", page_icon="☀️", layout="centered")
+st.set_page_config(page_title="Simulador Comercial", page_icon="☀️", layout="centered")
 
 BG_COLOR = "#fdf1db"
 PRIMARY_BLUE = "#26628d"
@@ -16,7 +16,6 @@ ALERT_ORANGE = "#e67e22"
 SUCCESS_GREEN = "#28a745"
 
 LOGO_EFICIENCIE = "https://i.postimg.cc/WzKTZg47/LOGO-COMPLETA-removebg-preview.png"
-LOGO_REENERGISA = "https://i.postimg.cc/nzHb5T5v/LOGO-positivo-reenergisa-2000x674.png"
 
 # Ícones Icons8 (Links diretos para PNG branco)
 ICON_SOLAR = "https://img.icons8.com/ios-filled/50/ffffff/solar-panel.png"
@@ -108,7 +107,6 @@ class PDFOficial(FPDF):
             except: pass
 
         safe_image(LOGO_EFICIENCIE, 10, 5, 35)
-        safe_image(LOGO_REENERGISA, 140, 6, 55)
 
     def footer(self):
         self.set_y(-12); self.set_font('Arial', 'I', 6); self.set_text_color(150); self.cell(0, 10, f'Pagina {self.page_no()}', 0, 0, 'C')
@@ -200,10 +198,7 @@ def criar_pdf_visual_final(d, nome, cidade, desconto):
     return pdf.output(dest='S').encode('latin-1')
 
 # --- 4. INTERFACE ---
-col_head1, col_head2 = st.columns([1, 1])
-with col_head1: st.image(LOGO_EFICIENCIE, width=150)
-with col_head2: st.markdown(f'<div style="text-align: right;"><img src="{LOGO_REENERGISA}" width="150"></div>', unsafe_allow_html=True)
-
+st.image(LOGO_EFICIENCIE, width=150)
 st.title("Simulador Comercial")
 st.write("---")
 
@@ -254,7 +249,7 @@ with st.container():
             with c2:
                 st.markdown(f"""
                 <div class="card-result card-light-blue" style="height: 140px;">
-                    <div class="label-text" style="color: {ECONOMY_BLUE} !important;">3. Fatura Reenergisa</div>
+                    <div class="label-text" style="color: {ECONOMY_BLUE} !important;">3. Fatura com Desconto</div>
                     <div class="big-number" style="font-size: 18px;">{fmt_currency(res['fat_re'])}</div>
                     <p style="font-size:11px; color:#888 !important; margin-top:5px;">(Energia com Desconto)</p>
                 </div>
