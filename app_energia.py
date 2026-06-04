@@ -219,5 +219,3 @@ with st.container():
 
             pdf_bytes = criar_pdf_visual_final(res, nome, cidade, desc)
             st.download_button(label="⬇️ BAIXAR PROPOSTA EM PDF", data=pdf_bytes, file_name=f"Proposta_Energisa_{nome}.pdf", mime="application/pdf", use_container_width=True)
-
-O código está finalizado com a sua logo e as cores da Energisa! Pode subir para o GitHub e testar. Se precisar de qualquer outro ajuste fino, é só me chamar.
