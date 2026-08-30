@@ -217,7 +217,7 @@ with st.container():
     c_uc, c4, c5 = st.columns(3)
     uc = c_uc.text_input("UC (Unidade Consumidora)", value="", placeholder="Ex: 123456")
     kwh = c4.number_input("Consumo (kWh)", min_value=0.0, value=None, placeholder="Digite o kWh...")
-    val_unit = c5.number_input("Valor Unitário (R$)", min_value=0.0, value=1.1540, format="%.4f")
+    val_unit = c5.number_input("Valor Unitário (R$)", min_value=0.0, value=1.3098, format="%.4f")
     
     c6, c7, c8 = st.columns(3)
     ban = c6.number_input("Bandeiras (R$)", min_value=0.0, value=None, placeholder="R$ 0,00")
