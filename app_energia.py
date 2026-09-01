@@ -17,7 +17,7 @@ SUCCESS_GREEN = "#28a745"
 
 LOGO_URL = "https://i.postimg.cc/K80nPvHc/Energisa-svg-2-removebg-preview.png"
 
-# Ícones Icons8 (Links diretos para PNG branco)
+# Ícones Icons8
 ICON_SOLAR = "https://img.icons8.com/ios-filled/50/ffffff/solar-panel.png"
 ICON_PIGGY = "https://img.icons8.com/ios-filled/50/ffffff/money-box.png"
 ICON_BULB =  "https://img.icons8.com/ios-filled/50/ffffff/light-on.png"
@@ -25,7 +25,7 @@ ICON_PLANT = "https://img.icons8.com/ios-filled/50/ffffff/potted-plant.png"
 ICON_FILE =  "https://img.icons8.com/ios-filled/50/ffffff/checked--v1.png"
 
 ICONS_LIST = [ICON_SOLAR, ICON_PIGGY, ICON_BULB, ICON_PLANT, ICON_FILE]
-ICONS_FALLBACK = ["S", "$", "!", "Y", "V"] # Letras caso a imagem falhe
+ICONS_FALLBACK = ["S", "$", "!", "Y", "V"] 
 
 PDF_CYAN = (0, 158, 224); PDF_LIME = (195, 213, 0); PDF_ORANGE = (243, 112, 33)
 
@@ -50,7 +50,6 @@ st.markdown(f"""
     .card-blue {{ border-left: 5px solid {PRIMARY_BLUE}; }}
     .card-light-blue {{ border-left: 5px solid {ECONOMY_BLUE}; }}
     
-    /* Card Verde com Texto Branco Forçado */
     .card-green {{ background-color: {SUCCESS_GREEN} !important; }}
     .card-green div, .card-green h2, .card-green p, .card-green span {{ color: #ffffff !important; }}
     
@@ -94,9 +93,7 @@ def calcular(kwh_total, valor_unit, tipo, bandeira, ilum, desc):
 class PDFOficial(FPDF):
     def header(self):
         self.set_fill_color(255, 255, 255); self.rect(0, 0, 210, 30, 'F')
-        # User-Agent de navegador real para evitar bloqueio
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
-        
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
         def safe_image(url, x, y, w):
             try:
                 r = requests.get(url, headers=headers, timeout=5)
@@ -105,7 +102,6 @@ class PDFOficial(FPDF):
                         tmp.write(r.content); tmp_name = tmp.name
                     self.image(tmp_name, x, y, w); os.unlink(tmp_name)
             except: pass
-
         safe_image(LOGO_URL, 10, 5, 35)
 
     def footer(self):
@@ -113,13 +109,11 @@ class PDFOficial(FPDF):
 
 def criar_pdf_visual_final(d, nome, cidade, desconto, uc):
     pdf = PDFOficial(); pdf.set_auto_page_break(auto=True, margin=15); pdf.add_page()
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+    headers = {'User-Agent': 'Mozilla/5.0'}
     
-    # Barra Verde
     pdf.set_y(30); pdf.set_fill_color(*PDF_LIME); pdf.rect(0, 30, 210, 8, 'F')
     pdf.set_font("Arial", "B", 10); pdf.set_text_color(255); pdf.cell(0, 8, "Energia solar sem investimento? Saiba como isso e possivel.", 0, 1, 'C')
     
-    # Ícones com os textos originais recuperados
     pdf.ln(3); pdf.set_font("Arial", "B", 10); pdf.set_text_color(*PDF_CYAN)
     pdf.cell(0, 6, "Conheca os beneficios da Geracao Compartilhada:", 0, 1, 'C')
     y_icons = pdf.get_y() + 2; centers = [25, 65, 105, 145, 185]
@@ -128,10 +122,7 @@ def criar_pdf_visual_final(d, nome, cidade, desconto, uc):
     pdf.set_font("Arial", "", 7); pdf.set_text_color(80)
     for i, t in enumerate(txts):
         cx = centers[i]
-        # Círculo
         pdf.set_fill_color(*PDF_CYAN); pdf.ellipse(cx-8, y_icons, 16, 16, 'F')
-        
-        # Tenta baixar imagem, senão desenha letra (Fallback)
         success = False
         try:
             r = requests.get(ICONS_LIST[i], headers=headers, timeout=4)
@@ -141,19 +132,11 @@ def criar_pdf_visual_final(d, nome, cidade, desconto, uc):
                 pdf.image(tmp_name, cx-4, y_icons+4, 8, 8); os.unlink(tmp_name)
                 success = True
         except: pass
-        
-        # Se falhou, coloca uma letra branca no meio
         if not success:
-            pdf.set_xy(cx-8, y_icons+4)
-            pdf.set_text_color(255, 255, 255)
-            pdf.set_font("Arial", "B", 10)
-            pdf.cell(16, 8, ICONS_FALLBACK[i], 0, 0, 'C')
-            pdf.set_text_color(80) # Volta cor normal
-            pdf.set_font("Arial", "", 7)
-
+            pdf.set_xy(cx-8, y_icons+4); pdf.set_text_color(255); pdf.set_font("Arial", "B", 10)
+            pdf.cell(16, 8, ICONS_FALLBACK[i], 0, 0, 'C'); pdf.set_text_color(80); pdf.set_font("Arial", "", 7)
         pdf.set_xy(cx-15, y_icons + 18); pdf.multi_cell(30, 3, t, 0, 'C')
 
-    # Como Funciona com os textos originais recuperados
     y_steps = y_icons + 35; pdf.set_xy(0, y_steps - 6); pdf.set_font("Arial", "B", 10); pdf.set_text_color(*PDF_CYAN); pdf.cell(0, 6, "Veja como funciona:", 0, 1, 'C')
     steps = ["1. Nos instalamos os paineis solares nas nossas usinas", "2. A luz solar e convertida em energia eletrica", "3. Voce adquire uma cota de acordo com seu consumo", "4. A energia injetada vira credito na sua conta"]
     bw = 42; sx = 13; gp = 4; pdf.set_font("Arial", "", 8); pdf.set_text_color(255)
@@ -161,34 +144,69 @@ def criar_pdf_visual_final(d, nome, cidade, desconto, uc):
         cx = sx + (i * (bw + gp)); pdf.set_fill_color(*PDF_CYAN); pdf.rect(cx, y_steps, bw, 22, 'F')
         pdf.set_xy(cx + 2, y_steps + 3); pdf.multi_cell(bw - 4, 3.5, t, 0, 'C')
 
-    # Titulo e Dados
     yp = y_steps + 30; pdf.set_xy(0, yp); pdf.set_font("Arial", "B", 12); pdf.set_text_color(*PDF_CYAN); pdf.cell(0, 8, "Proposta Comercial de Locacao de Usina Fotovoltaica", 0, 1, 'C')
     yb = pdf.get_y() + 2; pdf.set_draw_color(*PDF_CYAN); pdf.set_line_width(0.5); pdf.rect(13, yb, 184, 12)
     pdf.set_xy(15, yb + 3); pdf.set_font("Arial", "", 9); pdf.set_text_color(*PDF_CYAN)
-    
-    # Campo da UC no cabeçalho
     texto_uc = f"N cliente {uc}" if uc else "N cliente"
     pdf.cell(40, 5, texto_uc, 0, 1)
 
-    # Cards originais recuperados
+    # CARDS DE ECONOMIA
     yc = yb + 16; wc = 60; hc = 28; xc = 13
+    
     # Media
-    pdf.set_draw_color(*PDF_ORANGE); pdf.set_line_width(1); pdf.rect(xc, yc, wc, hc)
+    pdf.set_draw_color(*PDF_ORANGE); pdf.set_line_width(0.5); pdf.rect(xc, yc, wc, hc)
     pdf.set_xy(xc, yc + 3); pdf.set_font("Arial", "B", 9); pdf.set_text_color(*PDF_ORANGE); pdf.cell(wc, 5, "Media* (R$)", 0, 2, 'C')
     pdf.set_font("Arial", "", 7); pdf.set_text_color(80); pdf.cell(wc, 4, "(sem contratacao de GD)", 0, 2, 'C')
     pdf.ln(2); pdf.set_font("Arial", "B", 14); pdf.set_text_color(50); pdf.cell(wc, 6, fmt_currency(d['total_atual']), 0, 0, 'C')
+    
     # Econ
     xc += wc + 2; pdf.set_draw_color(*PDF_LIME); pdf.rect(xc, yc, wc, hc)
     pdf.set_xy(xc, yc + 3); pdf.set_font("Arial", "B", 9); pdf.set_text_color(*PDF_LIME); pdf.cell(wc, 5, "Economia Ofertada", 0, 2, 'C')
     pdf.set_font("Arial", "", 8); pdf.set_text_color(50); pdf.cell(wc, 5, f"Previo: {desconto:.1f}%", 0, 2, 'C')
     pdf.set_font("Arial", "", 7); pdf.set_text_color(100); pdf.cell(wc, 4, "% sobre credito compensado", 0, 0, 'C')
-    # Anual
+    
+    # Economia Projetada (Ano e Mês)
     xc += wc + 2; pdf.set_draw_color(*PDF_CYAN); pdf.rect(xc, yc, wc, hc)
-    pdf.set_xy(xc, yc + 3); pdf.set_font("Arial", "B", 9); pdf.set_text_color(*PDF_CYAN); pdf.cell(wc, 5, "Economia Anual Projetada", 0, 2, 'C')
-    pdf.ln(4); pdf.set_x(xc); pdf.set_font("Arial", "B", 14); pdf.set_text_color(50); pdf.cell(wc, 8, fmt_currency(d['econ_ano']), 0, 0, 'C')
+    pdf.set_xy(xc, yc + 2); pdf.set_font("Arial", "B", 9); pdf.set_text_color(*PDF_CYAN); pdf.cell(wc, 5, "Economia Projetada", 0, 2, 'C')
+    pdf.set_font("Arial", "B", 11); pdf.set_text_color(50)
+    pdf.set_xy(xc, yc + 10); pdf.cell(wc, 6, f"Ano: {fmt_currency(d['econ_ano'])}", 0, 0, 'C')
+    pdf.set_font("Arial", "B", 9); pdf.set_text_color(80)
+    pdf.set_xy(xc, yc + 17); pdf.cell(wc, 6, f"Mes: {fmt_currency(d['econ_mes'])}", 0, 0, 'C')
 
-    # Cota
-    pdf.set_y(yc + hc + 5); pdf.set_font("Arial", "", 9); pdf.set_text_color(80)
+    # --- NOVO QUADRO: TOTAL A PAGAR (CONCESSIONÁRIA + LOCAÇÃO) ---
+    y2 = yc + hc + 4
+    
+    # Concessionária
+    pdf.set_draw_color(180, 180, 180); pdf.rect(13, y2, 57, 18)
+    pdf.set_xy(13, y2 + 2); pdf.set_font("Arial", "B", 8); pdf.set_text_color(100); pdf.cell(57, 4, "Fatura Concessionaria", 0, 2, 'C')
+    pdf.set_font("Arial", "B", 11); pdf.set_text_color(50); pdf.cell(57, 8, fmt_currency(d['fat_en']), 0, 0, 'C')
+
+    # Sinal +
+    pdf.set_xy(70, y2 + 7); pdf.set_font("Arial", "B", 12); pdf.set_text_color(100); pdf.cell(6, 4, "+", 0, 0, 'C')
+
+    # Fatura Locação
+    pdf.rect(76, y2, 57, 18)
+    pdf.set_xy(76, y2 + 2); pdf.set_font("Arial", "B", 8); pdf.set_text_color(100); pdf.cell(57, 4, "Fatura Locacao", 0, 2, 'C')
+    pdf.set_font("Arial", "B", 11); pdf.set_text_color(50); pdf.cell(57, 8, fmt_currency(d['fat_re']), 0, 0, 'C')
+
+    # Sinal =
+    pdf.set_xy(133, y2 + 7); pdf.set_font("Arial", "B", 12); pdf.set_text_color(100); pdf.cell(6, 4, "=", 0, 0, 'C')
+
+    # Total a Pagar
+    pdf.set_draw_color(*PDF_LIME); pdf.set_fill_color(248, 255, 248); pdf.rect(139, y2, 58, 18, 'DF')
+    pdf.set_xy(139, y2 + 2); pdf.set_font("Arial", "B", 8); pdf.set_text_color(*PDF_LIME); pdf.cell(58, 4, "Novo Total Estimado", 0, 2, 'C')
+    pdf.set_font("Arial", "B", 12); pdf.set_text_color(0); pdf.cell(58, 8, fmt_currency(d['total_novo']), 0, 0, 'C')
+
+    # Observação Formal
+    y_obs = y2 + 20
+    pdf.set_xy(13, y_obs)
+    pdf.set_font("Arial", "I", 7)
+    pdf.set_text_color(100)
+    obs_text = "Observacao: O novo valor total a pagar apresentado e uma estimativa elaborada exclusivamente com base no volume de consumo (kWh) da fatura disponibilizada para analise, podendo sofrer variacoes de acordo com o consumo real e tarifas vigentes no mes de faturamento."
+    pdf.multi_cell(184, 3.5, obs_text, 0, 'J')
+
+    # Cota Necessária
+    pdf.set_y(y_obs + 10); pdf.set_font("Arial", "", 9); pdf.set_text_color(80)
     pdf.cell(0, 6, f"Cota necessaria: {fmt_number(d['kwh_re'])} KWh, equivalente a {d['qtd_placas']} placas solares.", 0, 1, 'C')
 
     # Footer original recuperado
@@ -196,7 +214,7 @@ def criar_pdf_visual_final(d, nome, cidade, desconto, uc):
     pdf.set_xy(15, yf + 3); pdf.set_font("Arial", "B", 8); pdf.set_text_color(*PDF_CYAN); pdf.cell(12, 4, "Cliente:", 0, 0)
     pdf.set_font("Arial", "", 8); pdf.set_text_color(0); pdf.cell(110, 4, nome.upper(), 0, 1)
     pdf.set_x(15); pdf.set_font("Arial", "B", 8); pdf.set_text_color(*PDF_CYAN); pdf.cell(15, 4, "Cidade:", 0, 0)
-    pdf.set_font("Arial", "", 8); pdf.set_text_color(0); pdf.cell(50, 4, f"{cidade.upper()} / MS", 0, 1)
+    pdf.set_font("Arial", "", 8); pdf.set_text_color(0); pdf.cell(50, 4, f"{cidade.upper()}", 0, 1)
     pdf.set_xy(13, yf + 14); pdf.set_font("Arial", "", 8); pdf.set_text_color(50); pdf.cell(184, 4, "Validade da proposta: 10 dias, sujeita a analise de credito.", 0, 1, 'C')
 
     return pdf.output(dest='S').encode('latin-1')
@@ -222,7 +240,8 @@ with st.container():
     c6, c7, c8 = st.columns(3)
     ban = c6.number_input("Bandeiras (R$)", min_value=0.0, value=None, placeholder="R$ 0,00")
     ilum = c7.number_input("Ilum. Púb. (R$)", min_value=0.0, value=None, placeholder="R$ 0,00")
-    desc = c8.number_input("Desconto (%)", value=30.0, step=0.5)
+    # Desconto Padrão alterado para 18%
+    desc = c8.number_input("Desconto (%)", value=18.0, step=0.5)
 
     st.write("")
     if st.button("CALCULAR PROPOSTA", use_container_width=True):
