@@ -9,14 +9,12 @@ from datetime import datetime
 # --- 1. CONFIGURAÇÕES VISUAIS ---
 st.set_page_config(page_title="Simulador Eficiencie", page_icon="☀️", layout="centered")
 
-# NOVA PALETA DE CORES GESTÃO EMPRESARIAL (Azul Marinho e Dourado)
-BG_COLOR = "#F4F7F6"         
+# NOVA PALETA MODO ESCURO GESTÃO EMPRESARIAL
 PRIMARY_BLUE = "#0A1B35"     
 PRIMARY_GOLD = "#DE9E26"     
-TEXT_COLOR = "#2C3E50"
 SUCCESS_GREEN = "#27ae60"
 
-# LINK DA NOVA LOGO JÁ INSERIDO
+# LOGO CORRIGIDA
 LOGO_URL = "https://i.postimg.cc/8c1tSX1V/Nova-logo-Eficiencie-removebg-preview.png"
 
 # Ícones Icons8
@@ -37,21 +35,25 @@ PDF_GRAY = (240, 240, 240)
 def fmt_currency(val): return f"R$ {val:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 def fmt_number(val): return f"{val:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
-# CSS Customizado
+# CSS Customizado - Modo Escuro Premium
 st.markdown(f"""
     <style>
-    .stApp {{ background-color: {BG_COLOR}; }}
-    h1, h2, h3, h4, p, div, span, label, li {{ color: {TEXT_COLOR} !important; font-family: 'Segoe UI', sans-serif; }}
+    /* Fundo do site Azul Marinho */
+    .stApp {{ background-color: {PRIMARY_BLUE}; }}
     
-    h1, h2, h3 {{ color: {PRIMARY_BLUE} !important; font-weight: 700; }}
+    /* Textos base em branco para contrastar com o fundo escuro */
+    h1, h2, h3, h4, p, label, li {{ color: #FFFFFF !important; font-family: 'Segoe UI', sans-serif; }}
     
+    /* Caixas de input brancas com borda dourada */
     .stTextInput input, .stNumberInput input, .stSelectbox div {{ 
         border-radius: 6px !important;
-        border: 1px solid #BDC3C7 !important;
+        border: 2px solid {PRIMARY_GOLD} !important;
         background-color: #ffffff !important; 
         color: {PRIMARY_BLUE} !important;
+        font-weight: 600;
     }}
     
+    /* Botão Dourado */
     div.stButton > button {{ 
         background-color: {PRIMARY_GOLD} !important; 
         color: {PRIMARY_BLUE} !important; 
@@ -65,42 +67,60 @@ st.markdown(f"""
         box-shadow: 0 4px 6px rgba(222, 158, 38, 0.3);
         transition: all 0.3s ease;
     }}
-    div.stButton > button:hover {{
-        background-color: #c48a20 !important;
-        box-shadow: 0 6px 8px rgba(222, 158, 38, 0.4);
-    }}
+    div.stButton > button:hover {{ background-color: #c48a20 !important; }}
     div.stButton > button p {{ color: {PRIMARY_BLUE} !important; font-size: 16px; font-weight: 900; }}
     
+    /* Cards Brancos de Resultado */
     .card-result {{ 
         padding: 20px; 
         border-radius: 12px; 
         text-align: center; 
         margin-bottom: 15px; 
-        box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
-        background-color: white; 
+        background-color: #FFFFFF !important; 
     }}
+    .card-result div, .card-result p, .card-result span {{ color: {PRIMARY_BLUE} !important; }}
+    .card-result .label-text {{ font-size: 13px; font-weight: 700; text-transform: uppercase; color: #7F8C8D !important; }}
+    .card-result .big-number {{ font-size: 24px; font-weight: 800; margin: 8px 0; }}
+    
     .card-red {{ border-top: 5px solid {PRIMARY_GOLD}; }}
     .card-blue {{ border-top: 5px solid {PRIMARY_BLUE}; }}
     
+    /* Card Economia (Mantém Escuro) */
     .card-green {{ 
-        background: linear-gradient(135deg, {PRIMARY_BLUE}, #0f2a52) !important; 
-        box-shadow: 0 8px 20px rgba(10, 27, 53, 0.2);
+        background: linear-gradient(135deg, {PRIMARY_BLUE}, #112A52) !important; 
+        border: 1px solid {PRIMARY_GOLD};
     }}
-    .card-green div, .card-green h2, .card-green p, .card-green span {{ color: #ffffff !important; }}
+    .card-green div, .card-green span {{ color: #FFFFFF !important; }}
     .card-green .highlight {{ color: {PRIMARY_GOLD} !important; font-weight: 900; }} 
-    
-    .big-number {{ font-size: 24px; font-weight: 800; margin: 8px 0; color: {PRIMARY_BLUE} !important; }}
-    .label-text {{ font-size: 13px; font-weight: 700; text-transform: uppercase; color: #7F8C8D !important; letter-spacing: 0.5px; }}
     </style>
 """, unsafe_allow_html=True)
 
-# --- 2. CÁLCULO ---
+# --- 2. LÓGICA DE TABELA ÓRIGO ---
+def obter_planos(kwh_val):
+    k = kwh_val if kwh_val else 0
+    if k <= 1000:
+        return [
+            {"nome": "Sem Fidelidade | Aviso 120 dias", "desc": 10, "fid": "NÃO", "aviso": "120 DIAS", "unica": "NÃO"},
+            {"nome": "Sem Fidelidade | Aviso 180 dias", "desc": 16, "fid": "NÃO", "aviso": "180 DIAS", "unica": "NÃO"},
+            {"nome": "Fidelidade 1 Ano | Aviso 180 dias", "desc": 18, "fid": "1 ANO", "aviso": "180 DIAS", "unica": "NÃO"}
+        ]
+    elif k <= 5000:
+        return [
+            {"nome": "Sem Fidelidade | Aviso 180 dias", "desc": 12, "fid": "NÃO", "aviso": "180 DIAS", "unica": "NÃO"},
+            {"nome": "Fidelidade 1 Ano | Aviso 180 dias", "desc": 18, "fid": "1 ANO", "aviso": "180 DIAS", "unica": "NÃO"},
+            {"nome": "Fidelidade 1 Ano | Fat. Única", "desc": 22, "fid": "1 ANO", "aviso": "180 DIAS", "unica": "SIM"}
+        ]
+    else:
+        return [
+            {"nome": "Sem Fidelidade | Aviso 180 dias", "desc": 20, "fid": "NÃO", "aviso": "180 DIAS", "unica": "NÃO"},
+            {"nome": "Fidelidade 1 Ano | Aviso 180 dias", "desc": 25, "fid": "1 ANO", "aviso": "180 DIAS", "unica": "NÃO"}
+        ]
+
 def calcular(kwh_total, valor_unit, tipo, bandeira, ilum, desc):
     kwh_total = kwh_total if kwh_total else 0.0
     valor_unit = valor_unit if valor_unit else 0.0
     bandeira = bandeira if bandeira else 0.0
     ilum = ilum if ilum else 0.0
-    desc = desc if desc else 0.0
 
     if tipo == "Monofásico": residuo = 30
     elif tipo == "Bifásico": residuo = 50
@@ -125,17 +145,14 @@ def calcular(kwh_total, valor_unit, tipo, bandeira, ilum, desc):
         "kwh_re": kwh_re, "qtd_placas": qtd_placas
     }
 
-# --- 3. PDF PREMIUM EFICIENCIE ---
+# --- 3. PDF PREMIUM EFICIENCIE (COM ACENTOS) ---
 class PDFOficial(FPDF):
     def header(self):
         self.set_fill_color(*PDF_BLUE)
         self.rect(0, 0, 210, 45, 'F')
-        
         self.set_fill_color(*PDF_GOLD)
         self.rect(0, 44, 210, 1.5, 'F')
-        
         headers = {'User-Agent': 'Mozilla/5.0'}
-        
         def safe_image(url, x, y, w):
             try:
                 r = requests.get(url, headers=headers, timeout=5)
@@ -144,7 +161,6 @@ class PDFOficial(FPDF):
                         tmp.write(r.content); tmp_name = tmp.name
                     self.image(tmp_name, x, y, w); os.unlink(tmp_name)
             except: pass
-
         safe_image(LOGO_URL, 10, 4, 42)
         
         self.set_y(20)
@@ -160,7 +176,7 @@ class PDFOficial(FPDF):
         self.set_text_color(255, 255, 255)
         self.cell(0, 10, 'Eficiencie - Solucoes em Energia Inteligente', 0, 0, 'C')
 
-def criar_pdf_visual_final(d, nome, cidade, desconto, uc):
+def criar_pdf_visual_final(d, nome, cidade, dados_plano, desconto_final, uc):
     pdf = PDFOficial(); pdf.set_auto_page_break(auto=True, margin=15); pdf.add_page()
     headers = {'User-Agent': 'Mozilla/5.0'}
     
@@ -171,7 +187,18 @@ def criar_pdf_visual_final(d, nome, cidade, desconto, uc):
     pdf.ln(6); pdf.set_font("Arial", "B", 11); pdf.set_text_color(*PDF_BLUE)
     pdf.cell(0, 6, "Conheca os beneficios da Geracao Compartilhada:", 0, 1, 'C')
     y_icons = pdf.get_y() + 4; centers = [25, 65, 105, 145, 185]
-    txts = ["Sem instalacao\nde equipamentos", "Sem preocupacao\ncom manutencao", "Economia na\nconta de energia", "Energia limpa\ne sustentavel", "Sem fidelidade apos\no cumprimento\ndo aviso previo"]
+    
+    # Textos dinâmicos dos benefícios
+    txt_fid = f"Fidelidade: {dados_plano['fid']}\nAviso: {dados_plano['aviso']}"
+    if dados_plano.get('unica') == "SIM": txt_fid += "\nFat. Unica"
+
+    txts = [
+        "Sem instalacao\nde equipamentos", 
+        "Sem preocupacao\ncom manutencao", 
+        "Economia na\nconta de energia", 
+        "Energia limpa\ne sustentavel", 
+        txt_fid
+    ]
     
     pdf.set_font("Arial", "", 7); pdf.set_text_color(80)
     for i, t in enumerate(txts):
@@ -208,31 +235,56 @@ def criar_pdf_visual_final(d, nome, cidade, desconto, uc):
 
     yc = yb + 18; wc = 58; hc = 30; xc = 13; espaco = 5
     
+    # Card 1 - Media
     pdf.set_draw_color(*PDF_BLUE); pdf.set_line_width(0.5); pdf.rect(xc, yc, wc, hc, 'D')
     pdf.set_fill_color(*PDF_BLUE); pdf.rect(xc, yc, wc, 8, 'F')
     pdf.set_xy(xc, yc + 1); pdf.set_font("Arial", "B", 9); pdf.set_text_color(255); pdf.cell(wc, 6, "Media* (R$)", 0, 2, 'C')
     pdf.set_font("Arial", "", 7); pdf.set_text_color(100); pdf.set_xy(xc, yc + 10); pdf.cell(wc, 4, "(sem contratacao de GD)", 0, 2, 'C')
     pdf.set_font("Arial", "B", 14); pdf.set_text_color(*PDF_BLUE); pdf.set_xy(xc, yc + 18); pdf.cell(wc, 8, fmt_currency(d['total_atual']), 0, 0, 'C')
     
+    # Card 2 - Desconto
     xc2 = xc + wc + espaco
     pdf.set_draw_color(*PDF_BLUE); pdf.rect(xc2, yc, wc, hc, 'D')
     pdf.set_fill_color(*PDF_BLUE); pdf.rect(xc2, yc, wc, 8, 'F')
     pdf.set_xy(xc2, yc + 1); pdf.set_font("Arial", "B", 9); pdf.set_text_color(255); pdf.cell(wc, 6, "Economia Ofertada", 0, 2, 'C')
-    pdf.set_font("Arial", "B", 9); pdf.set_text_color(*PDF_GOLD); pdf.set_xy(xc2, yc + 11); pdf.cell(wc, 6, f"Previa: {desconto:.1f}%", 0, 2, 'C')
+    pdf.set_font("Arial", "B", 10); pdf.set_text_color(*PDF_GOLD); pdf.set_xy(xc2, yc + 11); pdf.cell(wc, 6, f"Previa: {desconto_final:.1f}%", 0, 2, 'C')
     pdf.set_font("Arial", "", 7); pdf.set_text_color(100); pdf.set_xy(xc2, yc + 17); pdf.cell(wc, 4, "% sobre credito compensado", 0, 0, 'C')
     
+    # Card 3 - Economia Projetada
     xc3 = xc2 + wc + espaco
     pdf.set_draw_color(*PDF_GOLD); pdf.rect(xc3, yc, wc, hc, 'D')
     pdf.set_fill_color(*PDF_GOLD); pdf.rect(xc3, yc, wc, 8, 'F')
     pdf.set_xy(xc3, yc + 1); pdf.set_font("Arial", "B", 9); pdf.set_text_color(*PDF_BLUE); pdf.cell(wc, 6, "Economia Projetada", 0, 2, 'C')
-    
     pdf.set_font("Arial", "B", 12); pdf.set_text_color(*PDF_GOLD)
     pdf.set_xy(xc3, yc + 10); pdf.cell(wc, 8, f"Ano: {fmt_currency(d['econ_ano'])}", 0, 0, 'C')
-    
     pdf.set_font("Arial", "B", 10); pdf.set_text_color(80)
     pdf.set_xy(xc3, yc + 18); pdf.cell(wc, 8, f"Mes: {fmt_currency(d['econ_mes'])}", 0, 0, 'C')
 
-    pdf.set_y(yc + hc + 8); pdf.set_font("Arial", "B", 10); pdf.set_text_color(*PDF_BLUE)
+    # Quadro Total a Pagar
+    y2 = yc + hc + 5
+    pdf.set_draw_color(180, 180, 180); pdf.rect(13, y2, 57, 18)
+    pdf.set_xy(13, y2 + 2); pdf.set_font("Arial", "B", 8); pdf.set_text_color(100); pdf.cell(57, 4, "Fatura Concessionaria", 0, 2, 'C')
+    pdf.set_font("Arial", "B", 11); pdf.set_text_color(*PDF_BLUE); pdf.cell(57, 8, fmt_currency(d['fat_en']), 0, 0, 'C')
+
+    pdf.set_xy(70, y2 + 7); pdf.set_font("Arial", "B", 12); pdf.set_text_color(100); pdf.cell(6, 4, "+", 0, 0, 'C')
+
+    pdf.rect(76, y2, 57, 18)
+    pdf.set_xy(76, y2 + 2); pdf.set_font("Arial", "B", 8); pdf.set_text_color(100); pdf.cell(57, 4, "Fatura Locacao", 0, 2, 'C')
+    pdf.set_font("Arial", "B", 11); pdf.set_text_color(*PDF_BLUE); pdf.cell(57, 8, fmt_currency(d['fat_re']), 0, 0, 'C')
+
+    pdf.set_xy(133, y2 + 7); pdf.set_font("Arial", "B", 12); pdf.set_text_color(100); pdf.cell(6, 4, "=", 0, 0, 'C')
+
+    pdf.set_draw_color(*PDF_GOLD); pdf.set_fill_color(252, 248, 238); pdf.rect(139, y2, 58, 18, 'DF')
+    pdf.set_xy(139, y2 + 2); pdf.set_font("Arial", "B", 8); pdf.set_text_color(*PDF_GOLD); pdf.cell(58, 4, "Novo Total Estimado", 0, 2, 'C')
+    pdf.set_font("Arial", "B", 12); pdf.set_text_color(*PDF_BLUE); pdf.cell(58, 8, fmt_currency(d['total_novo']), 0, 0, 'C')
+
+    # Observação
+    y_obs = y2 + 20
+    pdf.set_xy(13, y_obs); pdf.set_font("Arial", "I", 7); pdf.set_text_color(100)
+    obs_text = "Observacao: O novo valor total a pagar apresentado e uma estimativa elaborada exclusivamente com base no volume de consumo (kWh) da fatura disponibilizada para analise, podendo sofrer variacoes de acordo com o consumo real e tarifas vigentes no mes de faturamento."
+    pdf.multi_cell(184, 3.5, obs_text, 0, 'J')
+
+    pdf.set_y(y_obs + 8); pdf.set_font("Arial", "B", 10); pdf.set_text_color(*PDF_BLUE)
     pdf.cell(0, 6, f"Cota necessaria: {fmt_number(d['kwh_re'])} kWh, equivalente a {d['qtd_placas']} placas solares.", 0, 1, 'C')
 
     data_atual = datetime.now().strftime("%d/%m/%Y")
@@ -249,7 +301,7 @@ def criar_pdf_visual_final(d, nome, cidade, desconto, uc):
 
 # --- 4. INTERFACE DO SITE ---
 st.markdown(f"<div style='text-align: center;'><img src='{LOGO_URL}' width='250'></div>", unsafe_allow_html=True)
-st.markdown(f"<h2 style='text-align: center; color: {PRIMARY_BLUE}; margin-top: 15px;'>Simulador de Inteligência Energética</h2>", unsafe_allow_html=True)
+st.markdown(f"<h2 style='text-align: center; color: {PRIMARY_GOLD} !important; margin-top: 15px;'>Simulador de Inteligência Energética</h2>", unsafe_allow_html=True)
 st.write("---")
 
 with st.container():
@@ -261,23 +313,38 @@ with st.container():
     
     st.markdown("### 📄 2. Dados da Fatura")
     c_uc, c4, c5 = st.columns(3)
-    uc = c_uc.text_input("UC (Unidade Consumidora)", value="", placeholder="Ex: 123456")
-    kwh = c4.number_input("Consumo (kWh)", min_value=0.0, value=None, placeholder="Digite o kWh...")
-    
-    # ATUALIZADO: Valor Unitário com 6 casas decimais e padrão 1.309830
+    uc = c_uc.text_input("UC", value="", placeholder="Ex: 123456")
+    kwh = c4.number_input("Consumo (kWh)", min_value=0.0, value=0.0)
     val_unit = c5.number_input("Valor Unitário (R$)", min_value=0.0, value=1.309830, format="%.6f")
     
-    c6, c7, c8 = st.columns(3)
-    ban = c6.number_input("Bandeiras (R$)", min_value=0.0, value=None, placeholder="R$ 0,00")
-    ilum = c7.number_input("Ilum. Púb. (R$)", min_value=0.0, value=None, placeholder="R$ 0,00")
-    desc = c8.number_input("Desconto (%)", value=30.0, step=0.5)
+    c6, c7 = st.columns(2)
+    ban = c6.number_input("Bandeiras (R$)", min_value=0.0, value=0.0)
+    ilum = c7.number_input("Ilum. Púb. (R$)", min_value=0.0, value=0.0)
 
-    st.write("")
+    # NOVO PAINEL ÓRIGO DINÂMICO
+    st.markdown("### 🎯 3. Condições Comerciais Órigo")
+    planos = obter_planos(kwh)
+    nomes_planos = [p["nome"] for p in planos]
+    
+    c_plano, c_icms = st.columns([2, 1])
+    plano_selecionado = c_plano.selectbox("Selecione a Condição (Baseada no Consumo)", nomes_planos)
+    dados_plano = next(p for p in planos if p["nome"] == plano_selecionado)
+    
+    is_icms = c_icms.checkbox("✅ Devolução ICMS (+17%)", value=True)
+    desconto_final = dados_plano["desc"] + (17.0 if is_icms else 0.0)
+
+    st.markdown(f"""
+    <div style="background-color: #112A52; border-left: 5px solid {PRIMARY_GOLD}; padding: 12px; border-radius: 5px; margin-bottom: 20px;">
+        <span style="color: #FFFFFF; font-size: 16px;"><strong>Desconto Final Aplicado: <span style="color: {PRIMARY_GOLD}; font-size: 20px;">{desconto_final}%</span></strong></span><br>
+        <span style="color: #BDC3C7; font-size: 13px;">(Desconto Tabela: {dados_plano['desc']}% | Isenção ICMS: {17 if is_icms else 0}%)</span>
+    </div>
+    """, unsafe_allow_html=True)
+
     if st.button("CALCULAR PROPOSTA EFICIENCIE", use_container_width=True):
         if kwh is None or kwh == 0:
             st.error("⚠️ Por favor, informe o consumo (kWh) válido para realizar o cálculo.")
         else:
-            res = calcular(kwh, val_unit, tipo, ban, ilum, desc)
+            res = calcular(kwh, val_unit, tipo, ban, ilum, desconto_final)
             st.write("---")
             st.markdown("### 📊 Resultado da Simulação")
             
@@ -285,7 +352,7 @@ with st.container():
             <div class="card-result card-red">
                 <div class="label-text">1. Fatura Atual Sem Desconto</div>
                 <div class="big-number" style="color: {PRIMARY_GOLD} !important;">{fmt_currency(res['total_atual'])}</div>
-                <p style="font-size:12px; margin:0; color:#888 !important;">Custo estimado mantendo a distribuidora</p>
+                <p style="font-size:12px; margin:0;">Custo estimado mantendo a distribuidora</p>
             </div>
             """, unsafe_allow_html=True)
 
@@ -293,17 +360,17 @@ with st.container():
             with c_res1:
                 st.markdown(f"""
                 <div class="card-result card-blue" style="height: 155px;">
-                    <div class="label-text">2. Taxa Distribuidora</div>
+                    <div class="label-text">2. Fatura Concessionária</div>
                     <div class="big-number" style="font-size: 18px;">{fmt_currency(res['fat_en'])}</div>
-                    <p style="font-size:11px; color:#888 !important; margin-top:5px;">(Custo de Disp. + Ilum + Band)</p>
+                    <p style="font-size:11px; margin-top:5px;">(Custo Disp. + Ilum + Band)</p>
                 </div>
                 """, unsafe_allow_html=True)
             with c_res2:
                 st.markdown(f"""
                 <div class="card-result card-blue" style="height: 155px;">
-                    <div class="label-text">3. Fatura Eficiencie</div>
+                    <div class="label-text">3. Fatura Locação</div>
                     <div class="big-number" style="font-size: 18px;">{fmt_currency(res['fat_re'])}</div>
-                    <p style="font-size:11px; color:#888 !important; margin-top:5px;">(Energia Limpa com Desconto)</p>
+                    <p style="font-size:11px; margin-top:5px;">(Energia Limpa com Desconto)</p>
                 </div>
                 """, unsafe_allow_html=True)
             with c_res3:
@@ -311,7 +378,7 @@ with st.container():
                 <div class="card-result card-blue" style="height: 155px; border-top: 5px solid {SUCCESS_GREEN};">
                     <div class="label-text">4. Novo Total a Pagar</div>
                     <div class="big-number" style="font-size: 20px; color: {SUCCESS_GREEN} !important;">{fmt_currency(res['total_novo'])}</div>
-                    <p style="font-size:11px; color:#888 !important; margin-top:5px;">Soma dos itens 2 e 3</p>
+                    <p style="font-size:11px; margin-top:5px;">Soma dos itens 2 e 3</p>
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -319,7 +386,7 @@ with st.container():
             <div class="card-result card-green">
                 <div style="font-size: 14px; font-weight:700; letter-spacing: 1px; margin-bottom: 10px;">💰 ECONOMIA ESTIMADA COM A EFICIENCIE</div>
                 <div style="font-size: 38px; font-weight: 900; margin-bottom: 5px;" class="highlight">{fmt_currency(res['econ_ano'])} <span style="font-size:16px; font-weight:normal; color:#ddd;">/ano</span></div>
-                <div style="font-size: 18px; font-weight: 600; color: {PRIMARY_GOLD} !important;">{fmt_currency(res['econ_mes'])} <span style="font-size:14px; font-weight:normal; color:#ccc;">/mês</span></div>
+                <div style="font-size: 18px; font-weight: 600; color: #FFFFFF !important;">{fmt_currency(res['econ_mes'])} <span style="font-size:14px; font-weight:normal; color:#ccc;">/mês</span></div>
             </div>
             """, unsafe_allow_html=True)
 
@@ -328,7 +395,7 @@ with st.container():
             with c_tec2: st.info(f"☀️ **Equipamento:** {res['qtd_placas']} Placas")
 
             st.write("")
-            pdf_bytes = criar_pdf_visual_final(res, nome, cidade, desc, uc)
+            pdf_bytes = criar_pdf_visual_final(res, nome, cidade, dados_plano, desconto_final, uc)
             st.download_button(
                 label="⬇️ GERAR PROPOSTA COMERCIAL (PDF)", 
                 data=pdf_bytes, 
