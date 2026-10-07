@@ -39,7 +39,7 @@ st.markdown(f"""
     <style>
     .stApp {{ background-color: {PRIMARY_BLUE}; }}
     h1, h2, h3, h4, p, label, li {{ color: #FFFFFF !important; font-family: 'Segoe UI', sans-serif; }}
-    .stTextInput input, .stNumberInput input {{ 
+    .stTextInput input, .stNumberInput input, .stSelectbox div {{ 
         border-radius: 6px !important;
         border: 2px solid {PRIMARY_GOLD} !important;
         background-color: #ffffff !important; 
@@ -244,9 +244,7 @@ def criar_pdf_visual_final(d, nome, cidade, dados_plano, desconto_final, uc):
     pdf.set_xy(xc2, yc + 1); pdf.set_font("Arial", "B", 9); pdf.set_text_color(255); pdf.cell(wc, 6, "Economia Ofertada", 0, 2, 'C')
     pdf.set_font("Arial", "B", 10); pdf.set_text_color(*PDF_GOLD); pdf.set_xy(xc2, yc + 11); pdf.cell(wc, 6, f"Prévia: {desconto_final:.1f}%", 0, 2, 'C')
     
-    # Texto dinâmico informando a isenção de ICMS no PDF
-    texto_icms = "(Inclui +17% Isenção ICMS)" if desconto_final > dados_plano['desc'] else "% sobre crédito compensado"
-    pdf.set_font("Arial", "", 7); pdf.set_text_color(100); pdf.set_xy(xc2, yc + 17); pdf.cell(wc, 4, texto_icms, 0, 0, 'C')
+    pdf.set_font("Arial", "", 7); pdf.set_text_color(100); pdf.set_xy(xc2, yc + 17); pdf.cell(wc, 4, "% sobre crédito compensado", 0, 0, 'C')
     
     # Card 3 - Economia Projetada
     xc3 = xc2 + wc + espaco
@@ -334,20 +332,14 @@ with st.container():
     planos = obter_planos(kwh)
     nomes_planos = [p["nome"] for p in planos]
     
-    c_plano, c_icms = st.columns([2, 1])
-    plano_selecionado = c_plano.selectbox("Selecione a Tabela (Libera de acordo com o kWh)", nomes_planos)
+    plano_selecionado = st.selectbox("Selecione a Tabela (Libera de acordo com o kWh)", nomes_planos)
     dados_plano = next(p for p in planos if p["nome"] == plano_selecionado)
     
-    # Botão ICMS começa desmarcado para mostrar o impacto na hora
-    icms_opcao = c_icms.radio("Isenção/Devolução de ICMS (+17%)", ["Aplicar Isenção", "Não Aplicar"], horizontal=True, index=1)
-    is_icms = (icms_opcao == "Aplicar Isenção")
-    
-    desconto_final = dados_plano["desc"] + (17.0 if is_icms and dados_plano["desc"] > 0 else 0.0)
+    desconto_final = dados_plano["desc"]
 
     st.markdown(f"""
     <div style="background-color: #112A52; border-left: 5px solid {PRIMARY_GOLD}; padding: 12px; border-radius: 5px; margin-bottom: 20px;">
-        <span style="color: #FFFFFF; font-size: 16px;"><strong>Desconto Final Aplicado: <span style="color: {PRIMARY_GOLD}; font-size: 20px;">{desconto_final}%</span></strong></span><br>
-        <span style="color: #BDC3C7; font-size: 13px;">(Tabela Órigo: {dados_plano['desc']}% | Isenção ICMS: {17 if is_icms and dados_plano['desc'] > 0 else 0}%)</span>
+        <span style="color: #FFFFFF; font-size: 16px;"><strong>Desconto Final Aplicado: <span style="color: {PRIMARY_GOLD}; font-size: 20px;">{desconto_final}%</span></strong></span>
     </div>
     """, unsafe_allow_html=True)
 
