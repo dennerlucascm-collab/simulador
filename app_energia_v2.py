@@ -39,13 +39,16 @@ st.markdown(f"""
     <style>
     .stApp {{ background-color: {PRIMARY_BLUE}; }}
     h1, h2, h3, h4, p, label, li {{ color: #FFFFFF !important; font-family: 'Segoe UI', sans-serif; }}
-    .stTextInput input, .stNumberInput input, .stSelectbox div {{ 
+    
+    /* CORREÇÃO: Apenas os campos de input de texto e número recebem o fundo branco */
+    .stTextInput input, .stNumberInput input {{ 
         border-radius: 6px !important;
         border: 2px solid {PRIMARY_GOLD} !important;
         background-color: #ffffff !important; 
         color: {PRIMARY_BLUE} !important;
         font-weight: 600;
     }}
+    
     div.stButton > button {{ 
         background-color: {PRIMARY_GOLD} !important; 
         color: {PRIMARY_BLUE} !important; 
@@ -61,6 +64,7 @@ st.markdown(f"""
     }}
     div.stButton > button:hover {{ background-color: #c48a20 !important; }}
     div.stButton > button p {{ color: {PRIMARY_BLUE} !important; font-size: 16px; font-weight: 900; }}
+    
     .card-result {{ 
         padding: 20px; 
         border-radius: 12px; 
@@ -71,8 +75,10 @@ st.markdown(f"""
     .card-result div, .card-result p, .card-result span {{ color: {PRIMARY_BLUE} !important; }}
     .card-result .label-text {{ font-size: 13px; font-weight: 700; text-transform: uppercase; color: #7F8C8D !important; }}
     .card-result .big-number {{ font-size: 24px; font-weight: 800; margin: 8px 0; }}
+    
     .card-red {{ border-top: 5px solid {PRIMARY_GOLD}; }}
     .card-blue {{ border-top: 5px solid {PRIMARY_BLUE}; }}
+    
     .card-green {{ 
         background: linear-gradient(135deg, {PRIMARY_BLUE}, #112A52) !important; 
         border: 1px solid {PRIMARY_GOLD};
@@ -243,7 +249,6 @@ def criar_pdf_visual_final(d, nome, cidade, dados_plano, desconto_final, uc):
     pdf.set_fill_color(*PDF_BLUE); pdf.rect(xc2, yc, wc, 8, 'F')
     pdf.set_xy(xc2, yc + 1); pdf.set_font("Arial", "B", 9); pdf.set_text_color(255); pdf.cell(wc, 6, "Economia Ofertada", 0, 2, 'C')
     pdf.set_font("Arial", "B", 10); pdf.set_text_color(*PDF_GOLD); pdf.set_xy(xc2, yc + 11); pdf.cell(wc, 6, f"Prévia: {desconto_final:.1f}%", 0, 2, 'C')
-    
     pdf.set_font("Arial", "", 7); pdf.set_text_color(100); pdf.set_xy(xc2, yc + 17); pdf.cell(wc, 4, "% sobre crédito compensado", 0, 0, 'C')
     
     # Card 3 - Economia Projetada
@@ -296,7 +301,6 @@ def criar_pdf_visual_final(d, nome, cidade, dados_plano, desconto_final, uc):
     return pdf.output(dest='S').encode('latin-1')
 
 # --- 4. INTERFACE DO SITE ---
-# Memória Inteligente (Session State)
 if 'mostrar_resultado' not in st.session_state:
     st.session_state.mostrar_resultado = False
 
@@ -321,7 +325,6 @@ with st.container():
     ban = c6.number_input("Bandeiras (R$)", min_value=0.0, value=None, placeholder="Ex: 0.00")
     ilum = c7.number_input("Ilum. Púb. (R$)", min_value=0.0, value=None, placeholder="Ex: 0.00")
 
-    # Limpa a tela se o kWh for apagado
     if kwh is None or kwh == 0:
         st.session_state.mostrar_resultado = False
 
