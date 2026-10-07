@@ -14,7 +14,6 @@ PRIMARY_BLUE = "#0A1B35"
 PRIMARY_GOLD = "#DE9E26"     
 SUCCESS_GREEN = "#27ae60"
 
-# LOGO CORRIGIDA
 LOGO_URL = "https://i.postimg.cc/8c1tSX1V/Nova-logo-Eficiencie-removebg-preview.png"
 
 # Ícones Icons8
@@ -35,7 +34,7 @@ PDF_GRAY = (240, 240, 240)
 def fmt_currency(val): return f"R$ {val:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 def fmt_number(val): return f"{val:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
-# CSS Customizado - Modo Escuro Premium
+# CSS Customizado - Modo Escuro Premium (Caixa de Seleção Corrigida)
 st.markdown(f"""
     <style>
     /* Fundo do site Azul Marinho */
@@ -44,8 +43,8 @@ st.markdown(f"""
     /* Textos base em branco para contrastar com o fundo escuro */
     h1, h2, h3, h4, p, label, li {{ color: #FFFFFF !important; font-family: 'Segoe UI', sans-serif; }}
     
-    /* Caixas de input brancas com borda dourada */
-    .stTextInput input, .stNumberInput input, .stSelectbox div {{ 
+    /* Caixas de input de texto e número (Menu selectbox foi removido daqui para resolver o bug da cor branca) */
+    .stTextInput input, .stNumberInput input {{ 
         border-radius: 6px !important;
         border: 2px solid {PRIMARY_GOLD} !important;
         background-color: #ffffff !important; 
@@ -95,9 +94,12 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 2. LÓGICA DE TABELA ÓRIGO ---
+# --- 2. MOTOR DA TABELA ÓRIGO AUTOMATIZADA ---
 def obter_planos(kwh_val):
-    k = kwh_val if kwh_val else 0
+    if kwh_val is None or kwh_val == 0:
+        return [{"nome": "⚠️ Preencha o Consumo (kWh) primeiro...", "desc": 0, "fid": "-", "aviso": "-", "unica": "-"}]
+        
+    k = float(kwh_val)
     if k <= 1000:
         return [
             {"nome": "Sem Fidelidade | Aviso 120 dias", "desc": 10, "fid": "NÃO", "aviso": "120 DIAS", "unica": "NÃO"},
@@ -107,13 +109,13 @@ def obter_planos(kwh_val):
     elif k <= 5000:
         return [
             {"nome": "Sem Fidelidade | Aviso 180 dias", "desc": 12, "fid": "NÃO", "aviso": "180 DIAS", "unica": "NÃO"},
-            {"nome": "Fidelidade 1 Ano | Aviso 180 dias", "desc": 18, "fid": "1 ANO", "aviso": "180 DIAS", "unica": "NÃO"},
-            {"nome": "Fidelidade 1 Ano | Fat. Única", "desc": 22, "fid": "1 ANO", "aviso": "180 DIAS", "unica": "SIM"}
+            {"nome": "Fidelidade 1 Ano | Aviso 180 dias", "desc": 18, "fid": "1 ANO", "aviso": "180 DIAS", "unica": "NÃO"}
         ]
-    else:
+    else: # Acima de 5000 kWh
         return [
             {"nome": "Sem Fidelidade | Aviso 180 dias", "desc": 20, "fid": "NÃO", "aviso": "180 DIAS", "unica": "NÃO"},
-            {"nome": "Fidelidade 1 Ano | Aviso 180 dias", "desc": 25, "fid": "1 ANO", "aviso": "180 DIAS", "unica": "NÃO"}
+            {"nome": "Fidelidade 1 Ano | Aviso 180 dias", "desc": 25, "fid": "1 ANO", "aviso": "180 DIAS", "unica": "NÃO"},
+            {"nome": "Fidelidade 1 Ano | Fatura Única", "desc": 22, "fid": "1 ANO", "aviso": "180 DIAS", "unica": "SIM"}
         ]
 
 def calcular(kwh_total, valor_unit, tipo, bandeira, ilum, desc):
@@ -145,7 +147,7 @@ def calcular(kwh_total, valor_unit, tipo, bandeira, ilum, desc):
         "kwh_re": kwh_re, "qtd_placas": qtd_placas
     }
 
-# --- 3. PDF PREMIUM EFICIENCIE (COM ACENTOS) ---
+# --- 3. PDF PREMIUM EFICIENCIE ---
 class PDFOficial(FPDF):
     def header(self):
         self.set_fill_color(*PDF_BLUE)
@@ -188,9 +190,9 @@ def criar_pdf_visual_final(d, nome, cidade, dados_plano, desconto_final, uc):
     pdf.cell(0, 6, "Conheca os beneficios da Geracao Compartilhada:", 0, 1, 'C')
     y_icons = pdf.get_y() + 4; centers = [25, 65, 105, 145, 185]
     
-    # Textos dinâmicos dos benefícios
+    # Textos dinâmicos baseados na Tabela Órigo selecionada
     txt_fid = f"Fidelidade: {dados_plano['fid']}\nAviso: {dados_plano['aviso']}"
-    if dados_plano.get('unica') == "SIM": txt_fid += "\nFat. Unica"
+    if dados_plano.get('unica') == "SIM": txt_fid += "\nFatura Unica"
 
     txts = [
         "Sem instalacao\nde equipamentos", 
@@ -314,35 +316,50 @@ with st.container():
     st.markdown("### 📄 2. Dados da Fatura")
     c_uc, c4, c5 = st.columns(3)
     uc = c_uc.text_input("UC", value="", placeholder="Ex: 123456")
-    kwh = c4.number_input("Consumo (kWh)", min_value=0.0, value=0.0)
-    val_unit = c5.number_input("Valor Unitário (R$)", min_value=0.0, value=1.309830, format="%.6f")
+    
+    # KWH TOTALMENTE VAZIO POR PADRÃO
+    kwh = c4.number_input("Consumo (kWh)", min_value=0.0, value=None, placeholder="Ex: 1500")
+    
+    # VALOR UNITÁRIO LIMPO E COM 6 CASAS
+    val_unit = c5.number_input("Valor Unitário", min_value=0.0, value=1.309830, format="%.6f")
     
     c6, c7 = st.columns(2)
-    ban = c6.number_input("Bandeiras (R$)", min_value=0.0, value=0.0)
-    ilum = c7.number_input("Ilum. Púb. (R$)", min_value=0.0, value=0.0)
+    # BANDEIRAS E ILUMINAÇÃO VAZIOS POR PADRÃO
+    ban = c6.number_input("Bandeiras (R$)", min_value=0.0, value=None, placeholder="Ex: 0.00")
+    ilum = c7.number_input("Ilum. Púb. (R$)", min_value=0.0, value=None, placeholder="Ex: 0.00")
 
-    # NOVO PAINEL ÓRIGO DINÂMICO
+    # --- NOVO PAINEL ÓRIGO DINÂMICO ---
+    st.write("---")
     st.markdown("### 🎯 3. Condições Comerciais Órigo")
+    
+    # Motor busca os planos da tabela baseados no KWH digitado
     planos = obter_planos(kwh)
     nomes_planos = [p["nome"] for p in planos]
     
     c_plano, c_icms = st.columns([2, 1])
-    plano_selecionado = c_plano.selectbox("Selecione a Condição (Baseada no Consumo)", nomes_planos)
+    plano_selecionado = c_plano.selectbox("Selecione a Tabela (Libera de acordo com o kWh)", nomes_planos)
     dados_plano = next(p for p in planos if p["nome"] == plano_selecionado)
     
-    is_icms = c_icms.checkbox("✅ Devolução ICMS (+17%)", value=True)
+    # BOTÕES DE ICMS MUITO MAIS CLAROS E INTUITIVOS
+    icms_opcao = c_icms.radio("Isenção/Devolução de ICMS (+17%)", ["Aplicar Isenção", "Não Aplicar"], horizontal=True)
+    is_icms = (icms_opcao == "Aplicar Isenção")
+    
+    # Cálculo do desconto final
     desconto_final = dados_plano["desc"] + (17.0 if is_icms else 0.0)
 
+    # Painel exibindo a matemática do desconto para o consultor não ter dúvidas
     st.markdown(f"""
     <div style="background-color: #112A52; border-left: 5px solid {PRIMARY_GOLD}; padding: 12px; border-radius: 5px; margin-bottom: 20px;">
         <span style="color: #FFFFFF; font-size: 16px;"><strong>Desconto Final Aplicado: <span style="color: {PRIMARY_GOLD}; font-size: 20px;">{desconto_final}%</span></strong></span><br>
-        <span style="color: #BDC3C7; font-size: 13px;">(Desconto Tabela: {dados_plano['desc']}% | Isenção ICMS: {17 if is_icms else 0}%)</span>
+        <span style="color: #BDC3C7; font-size: 13px;">(Tabela Órigo: {dados_plano['desc']}% | Isenção ICMS: {17 if is_icms else 0}%)</span>
     </div>
     """, unsafe_allow_html=True)
 
     if st.button("CALCULAR PROPOSTA EFICIENCIE", use_container_width=True):
         if kwh is None or kwh == 0:
-            st.error("⚠️ Por favor, informe o consumo (kWh) válido para realizar o cálculo.")
+            st.error("⚠️ Por favor, informe o consumo (kWh) válido na Seção 2 para realizar o cálculo.")
+        elif dados_plano["desc"] == 0:
+            st.error("⚠️ Preencha o Consumo (kWh) para carregar as opções da Tabela Órigo.")
         else:
             res = calcular(kwh, val_unit, tipo, ban, ilum, desconto_final)
             st.write("---")
