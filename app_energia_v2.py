@@ -11,13 +11,13 @@ st.set_page_config(page_title="Simulador Eficiencie", page_icon="☀️", layout
 
 # NOVA PALETA DE CORES GESTÃO EMPRESARIAL (Azul Marinho e Dourado)
 BG_COLOR = "#F4F7F6"         
-PRIMARY_BLUE = "#0A1B35"     # Azul Marinho profundo da nova logo
-PRIMARY_GOLD = "#DE9E26"     # Dourado/Amarelo ouro das barras
+PRIMARY_BLUE = "#0A1B35"     
+PRIMARY_GOLD = "#DE9E26"     
 TEXT_COLOR = "#2C3E50"
 SUCCESS_GREEN = "#27ae60"
 
-# ⚠️ ATENÇÃO: Cole aqui o link da sua logo nova COM FUNDO TRANSPARENTE (.png)
-LOGO_URL = "COLE_O_SEU_LINK_AQUI"
+# LINK DA NOVA LOGO JÁ INSERIDO
+LOGO_URL = "https://i.postimg.cc/8c1tSX1V/Nova-logo-Eficiencie-removebg-preview.png"
 
 # Ícones Icons8
 ICON_SOLAR = "https://img.icons8.com/ios-filled/50/ffffff/solar-panel.png"
@@ -125,21 +125,18 @@ def calcular(kwh_total, valor_unit, tipo, bandeira, ilum, desc):
         "kwh_re": kwh_re, "qtd_placas": qtd_placas
     }
 
-# --- 3. PDF PREMIUM EFICIENCIE (CORRIGIDO E COM ACENTOS) ---
+# --- 3. PDF PREMIUM EFICIENCIE ---
 class PDFOficial(FPDF):
     def header(self):
-        # Fundo do cabeçalho Azul Marinho
         self.set_fill_color(*PDF_BLUE)
         self.rect(0, 0, 210, 45, 'F')
         
-        # Filete Dourado de acabamento
         self.set_fill_color(*PDF_GOLD)
         self.rect(0, 44, 210, 1.5, 'F')
         
         headers = {'User-Agent': 'Mozilla/5.0'}
         
         def safe_image(url, x, y, w):
-            if url == "COLE_O_SEU_LINK_AQUI": return
             try:
                 r = requests.get(url, headers=headers, timeout=5)
                 if r.status_code == 200:
@@ -152,7 +149,7 @@ class PDFOficial(FPDF):
         
         self.set_y(20)
         self.set_font("Arial", "B", 14)
-        self.set_text_color(255, 255, 255) # Texto Branco para destacar no Azul Marinho
+        self.set_text_color(255, 255, 255)
         self.cell(0, 5, "ESTUDO DE VIABILIDADE ECONOMICA", 0, 1, 'R')
 
     def footer(self):
@@ -167,12 +164,10 @@ def criar_pdf_visual_final(d, nome, cidade, desconto, uc):
     pdf = PDFOficial(); pdf.set_auto_page_break(auto=True, margin=15); pdf.add_page()
     headers = {'User-Agent': 'Mozilla/5.0'}
     
-    # Subtítulo Dourado com acentos
     pdf.set_y(52); pdf.set_font("Arial", "B", 12); pdf.set_text_color(*PDF_GOLD)
     pdf.cell(0, 8, "Energia solar sem investimento? Saiba como isso e possivel.", 0, 1, 'C')
     pdf.set_draw_color(*PDF_GOLD); pdf.line(15, 61, 195, 61)
     
-    # Ícones com acentos
     pdf.ln(6); pdf.set_font("Arial", "B", 11); pdf.set_text_color(*PDF_BLUE)
     pdf.cell(0, 6, "Conheca os beneficios da Geracao Compartilhada:", 0, 1, 'C')
     y_icons = pdf.get_y() + 4; centers = [25, 65, 105, 145, 185]
@@ -196,7 +191,6 @@ def criar_pdf_visual_final(d, nome, cidade, desconto, uc):
             pdf.cell(18, 8, ICONS_FALLBACK[i], 0, 0, 'C'); pdf.set_text_color(80); pdf.set_font("Arial", "", 7)
         pdf.set_xy(cx-16, y_icons + 20); pdf.multi_cell(32, 3.5, t, 0, 'C')
 
-    # Como Funciona com acentos
     y_steps = y_icons + 38; pdf.set_xy(0, y_steps - 6); pdf.set_font("Arial", "B", 11); pdf.set_text_color(*PDF_BLUE); pdf.cell(0, 6, "Veja como funciona:", 0, 1, 'C')
     steps = ["1. Nos instalamos os paineis solares nas nossas usinas", "2. A luz solar e convertida em energia eletrica", "3. Voce adquire uma cota de acordo com seu consumo", "4. A energia injetada vira credito na sua conta"]
     bw = 42; sx = 13; gp = 4; pdf.set_font("Arial", "", 8); pdf.set_text_color(255)
@@ -204,7 +198,6 @@ def criar_pdf_visual_final(d, nome, cidade, desconto, uc):
         cx = sx + (i * (bw + gp)); pdf.set_fill_color(*PDF_BLUE); pdf.rect(cx, y_steps, bw, 22, 'F')
         pdf.set_xy(cx + 2, y_steps + 3); pdf.multi_cell(bw - 4, 4, t, 0, 'C')
 
-    # Titulo e Dados Resumo com acentos
     yp = y_steps + 32; pdf.set_xy(0, yp); pdf.set_font("Arial", "B", 13); pdf.set_text_color(*PDF_BLUE); pdf.cell(0, 8, "Proposta Comercial de Locacao de Usina Fotovoltaica", 0, 1, 'C')
     yb = pdf.get_y() + 2; 
     pdf.set_fill_color(*PDF_GRAY); pdf.set_draw_color(*PDF_BLUE); pdf.set_line_width(0.5)
@@ -213,17 +206,14 @@ def criar_pdf_visual_final(d, nome, cidade, desconto, uc):
     texto_uc = f"N cliente {uc}" if uc else "N cliente"
     pdf.cell(40, 6, texto_uc, 0, 1)
 
-    # --- CARDS REDESENHADOS E COORDENADAS TRAVADAS ---
     yc = yb + 18; wc = 58; hc = 30; xc = 13; espaco = 5
     
-    # Card 1 - Media Atual
     pdf.set_draw_color(*PDF_BLUE); pdf.set_line_width(0.5); pdf.rect(xc, yc, wc, hc, 'D')
     pdf.set_fill_color(*PDF_BLUE); pdf.rect(xc, yc, wc, 8, 'F')
     pdf.set_xy(xc, yc + 1); pdf.set_font("Arial", "B", 9); pdf.set_text_color(255); pdf.cell(wc, 6, "Media* (R$)", 0, 2, 'C')
     pdf.set_font("Arial", "", 7); pdf.set_text_color(100); pdf.set_xy(xc, yc + 10); pdf.cell(wc, 4, "(sem contratacao de GD)", 0, 2, 'C')
     pdf.set_font("Arial", "B", 14); pdf.set_text_color(*PDF_BLUE); pdf.set_xy(xc, yc + 18); pdf.cell(wc, 8, fmt_currency(d['total_atual']), 0, 0, 'C')
     
-    # Card 2 - Desconto Ofertado
     xc2 = xc + wc + espaco
     pdf.set_draw_color(*PDF_BLUE); pdf.rect(xc2, yc, wc, hc, 'D')
     pdf.set_fill_color(*PDF_BLUE); pdf.rect(xc2, yc, wc, 8, 'F')
@@ -231,7 +221,6 @@ def criar_pdf_visual_final(d, nome, cidade, desconto, uc):
     pdf.set_font("Arial", "B", 9); pdf.set_text_color(*PDF_GOLD); pdf.set_xy(xc2, yc + 11); pdf.cell(wc, 6, f"Previa: {desconto:.1f}%", 0, 2, 'C')
     pdf.set_font("Arial", "", 7); pdf.set_text_color(100); pdf.set_xy(xc2, yc + 17); pdf.cell(wc, 4, "% sobre credito compensado", 0, 0, 'C')
     
-    # Card 3 - Economia Projetada (Destaque Dourado)
     xc3 = xc2 + wc + espaco
     pdf.set_draw_color(*PDF_GOLD); pdf.rect(xc3, yc, wc, hc, 'D')
     pdf.set_fill_color(*PDF_GOLD); pdf.rect(xc3, yc, wc, 8, 'F')
@@ -243,11 +232,9 @@ def criar_pdf_visual_final(d, nome, cidade, desconto, uc):
     pdf.set_font("Arial", "B", 10); pdf.set_text_color(80)
     pdf.set_xy(xc3, yc + 18); pdf.cell(wc, 8, f"Mes: {fmt_currency(d['econ_mes'])}", 0, 0, 'C')
 
-    # Cota Necessária
     pdf.set_y(yc + hc + 8); pdf.set_font("Arial", "B", 10); pdf.set_text_color(*PDF_BLUE)
     pdf.cell(0, 6, f"Cota necessaria: {fmt_number(d['kwh_re'])} kWh, equivalente a {d['qtd_placas']} placas solares.", 0, 1, 'C')
 
-    # Rodapé de Dados
     data_atual = datetime.now().strftime("%d/%m/%Y")
     pdf.set_y(260); pdf.set_draw_color(*PDF_BLUE); pdf.set_line_width(0.5); pdf.rect(13, 260, 184, 18, 'D')
     pdf.set_xy(15, 262); pdf.set_font("Arial", "B", 8); pdf.set_text_color(*PDF_BLUE); pdf.cell(15, 5, "Cliente:", 0, 0)
@@ -261,9 +248,7 @@ def criar_pdf_visual_final(d, nome, cidade, desconto, uc):
     return pdf.output(dest='S').encode('latin-1')
 
 # --- 4. INTERFACE DO SITE ---
-# Exibe a logo no site apenas se houver um link válido inserido
-if LOGO_URL != "COLE_O_SEU_LINK_AQUI":
-    st.markdown(f"<div style='text-align: center;'><img src='{LOGO_URL}' width='250'></div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align: center;'><img src='{LOGO_URL}' width='250'></div>", unsafe_allow_html=True)
 st.markdown(f"<h2 style='text-align: center; color: {PRIMARY_BLUE}; margin-top: 15px;'>Simulador de Inteligência Energética</h2>", unsafe_allow_html=True)
 st.write("---")
 
@@ -278,7 +263,9 @@ with st.container():
     c_uc, c4, c5 = st.columns(3)
     uc = c_uc.text_input("UC (Unidade Consumidora)", value="", placeholder="Ex: 123456")
     kwh = c4.number_input("Consumo (kWh)", min_value=0.0, value=None, placeholder="Digite o kWh...")
-    val_unit = c5.number_input("Valor Unitário (R$)", min_value=0.0, value=1.1540, format="%.4f")
+    
+    # ATUALIZADO: Valor Unitário com 6 casas decimais e padrão 1.309830
+    val_unit = c5.number_input("Valor Unitário (R$)", min_value=0.0, value=1.309830, format="%.6f")
     
     c6, c7, c8 = st.columns(3)
     ban = c6.number_input("Bandeiras (R$)", min_value=0.0, value=None, placeholder="R$ 0,00")
