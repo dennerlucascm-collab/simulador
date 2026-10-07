@@ -37,13 +37,8 @@ def fmt_number(val): return f"{val:,.2f}".replace(",", "X").replace(".", ",").re
 # CSS Customizado - Modo Escuro Premium
 st.markdown(f"""
     <style>
-    /* Fundo do site Azul Marinho */
     .stApp {{ background-color: {PRIMARY_BLUE}; }}
-    
-    /* Textos base em branco para contrastar com o fundo escuro */
     h1, h2, h3, h4, p, label, li {{ color: #FFFFFF !important; font-family: 'Segoe UI', sans-serif; }}
-    
-    /* Caixas de input de texto e número */
     .stTextInput input, .stNumberInput input {{ 
         border-radius: 6px !important;
         border: 2px solid {PRIMARY_GOLD} !important;
@@ -51,8 +46,6 @@ st.markdown(f"""
         color: {PRIMARY_BLUE} !important;
         font-weight: 600;
     }}
-    
-    /* Botão Dourado */
     div.stButton > button {{ 
         background-color: {PRIMARY_GOLD} !important; 
         color: {PRIMARY_BLUE} !important; 
@@ -68,8 +61,6 @@ st.markdown(f"""
     }}
     div.stButton > button:hover {{ background-color: #c48a20 !important; }}
     div.stButton > button p {{ color: {PRIMARY_BLUE} !important; font-size: 16px; font-weight: 900; }}
-    
-    /* Cards Brancos de Resultado */
     .card-result {{ 
         padding: 20px; 
         border-radius: 12px; 
@@ -80,11 +71,8 @@ st.markdown(f"""
     .card-result div, .card-result p, .card-result span {{ color: {PRIMARY_BLUE} !important; }}
     .card-result .label-text {{ font-size: 13px; font-weight: 700; text-transform: uppercase; color: #7F8C8D !important; }}
     .card-result .big-number {{ font-size: 24px; font-weight: 800; margin: 8px 0; }}
-    
     .card-red {{ border-top: 5px solid {PRIMARY_GOLD}; }}
     .card-blue {{ border-top: 5px solid {PRIMARY_BLUE}; }}
-    
-    /* Card Economia (Mantém Escuro) */
     .card-green {{ 
         background: linear-gradient(135deg, {PRIMARY_BLUE}, #112A52) !important; 
         border: 1px solid {PRIMARY_GOLD};
@@ -94,7 +82,7 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 2. MOTOR DA TABELA ÓRIGO AUTOMATIZADA (AGORA MOSTRA O %) ---
+# --- 2. MOTOR DA TABELA ÓRIGO AUTOMATIZADA ---
 def obter_planos(kwh_val):
     if kwh_val is None or kwh_val == 0:
         return [{"nome": "⚠️ Preencha o Consumo (kWh) primeiro...", "desc": 0, "fid": "-", "aviso": "-", "unica": "-"}]
@@ -112,7 +100,7 @@ def obter_planos(kwh_val):
             {"nome": "18% | Fidelidade 1 Ano | Aviso 180 dias", "desc": 18, "fid": "1 ANO", "aviso": "180 DIAS", "unica": "NÃO"},
             {"nome": "22% | Fidelidade 1 Ano | Fatura Única", "desc": 22, "fid": "1 ANO", "aviso": "180 DIAS", "unica": "SIM"}
         ]
-    else: # Acima de 5000 kWh
+    else: 
         return [
             {"nome": "20% | Sem Fidelidade | Aviso 180 dias", "desc": 20, "fid": "NÃO", "aviso": "180 DIAS", "unica": "NÃO"},
             {"nome": "25% | Fidelidade 1 Ano | Aviso 180 dias", "desc": 25, "fid": "1 ANO", "aviso": "180 DIAS", "unica": "NÃO"}
@@ -168,7 +156,7 @@ class PDFOficial(FPDF):
         self.set_y(20)
         self.set_font("Arial", "B", 14)
         self.set_text_color(255, 255, 255)
-        self.cell(0, 5, "ESTUDO DE VIABILIDADE ECONOMICA", 0, 1, 'R')
+        self.cell(0, 5, "ESTUDO DE VIABILIDADE ECONÔMICA", 0, 1, 'R')
 
     def footer(self):
         self.set_y(-15)
@@ -176,28 +164,34 @@ class PDFOficial(FPDF):
         self.rect(0, 285, 210, 15, 'F')
         self.set_font('Arial', 'B', 8)
         self.set_text_color(255, 255, 255)
-        self.cell(0, 10, 'Eficiencie - Solucoes em Energia Inteligente', 0, 0, 'C')
+        self.cell(0, 10, 'Eficiencie - Soluções em Energia Inteligente', 0, 0, 'C')
 
 def criar_pdf_visual_final(d, nome, cidade, dados_plano, desconto_final, uc):
     pdf = PDFOficial(); pdf.set_auto_page_break(auto=True, margin=15); pdf.add_page()
     headers = {'User-Agent': 'Mozilla/5.0'}
     
     pdf.set_y(52); pdf.set_font("Arial", "B", 12); pdf.set_text_color(*PDF_GOLD)
-    pdf.cell(0, 8, "Energia solar sem investimento? Saiba como isso e possivel.", 0, 1, 'C')
+    pdf.cell(0, 8, "Energia solar sem investimento? Saiba como isso é possível.", 0, 1, 'C')
     pdf.set_draw_color(*PDF_GOLD); pdf.line(15, 61, 195, 61)
     
     pdf.ln(6); pdf.set_font("Arial", "B", 11); pdf.set_text_color(*PDF_BLUE)
-    pdf.cell(0, 6, "Conheca os beneficios da Geracao Compartilhada:", 0, 1, 'C')
+    pdf.cell(0, 6, "Conheça os benefícios da Geração Compartilhada:", 0, 1, 'C')
     y_icons = pdf.get_y() + 4; centers = [25, 65, 105, 145, 185]
     
-    txt_fid = f"Fidelidade: {dados_plano['fid']}\nAviso: {dados_plano['aviso']}"
-    if dados_plano.get('unica') == "SIM": txt_fid += "\nFatura Unica"
+    # Texto dinâmico do ícone 5 (Fidelidade/Aviso Prévio) com acentuação correta
+    if dados_plano['fid'] == "NÃO":
+        txt_fid = "Sem fidelidade após\no cumprimento\ndo aviso prévio"
+    else:
+        if dados_plano.get('unica') == "SIM":
+            txt_fid = f"Fidelidade: {dados_plano['fid'].title()}\nFatura Única"
+        else:
+            txt_fid = f"Fidelidade: {dados_plano['fid'].title()}\nAviso: {dados_plano['aviso'].title()}"
 
     txts = [
-        "Sem instalacao\nde equipamentos", 
-        "Sem preocupacao\ncom manutencao", 
+        "Sem instalação\nde equipamentos", 
+        "Sem preocupação\ncom manutenção", 
         "Economia na\nconta de energia", 
-        "Energia limpa\ne sustentavel", 
+        "Energia limpa\ne sustentável", 
         txt_fid
     ]
     
@@ -220,27 +214,32 @@ def criar_pdf_visual_final(d, nome, cidade, dados_plano, desconto_final, uc):
         pdf.set_xy(cx-16, y_icons + 20); pdf.multi_cell(32, 3.5, t, 0, 'C')
 
     y_steps = y_icons + 38; pdf.set_xy(0, y_steps - 6); pdf.set_font("Arial", "B", 11); pdf.set_text_color(*PDF_BLUE); pdf.cell(0, 6, "Veja como funciona:", 0, 1, 'C')
-    steps = ["1. Nos instalamos os paineis solares nas nossas usinas", "2. A luz solar e convertida em energia eletrica", "3. Voce adquire uma cota de acordo com seu consumo", "4. A energia injetada vira credito na sua conta"]
+    steps = [
+        "1. Nós instalamos os painéis solares nas nossas usinas", 
+        "2. A luz solar é convertida em energia elétrica", 
+        "3. Você adquire uma cota de acordo com seu consumo", 
+        "4. A energia injetada vira crédito na sua conta"
+    ]
     bw = 42; sx = 13; gp = 4; pdf.set_font("Arial", "", 8); pdf.set_text_color(255)
     for i, t in enumerate(steps):
         cx = sx + (i * (bw + gp)); pdf.set_fill_color(*PDF_BLUE); pdf.rect(cx, y_steps, bw, 22, 'F')
         pdf.set_xy(cx + 2, y_steps + 3); pdf.multi_cell(bw - 4, 4, t, 0, 'C')
 
-    yp = y_steps + 32; pdf.set_xy(0, yp); pdf.set_font("Arial", "B", 13); pdf.set_text_color(*PDF_BLUE); pdf.cell(0, 8, "Proposta Comercial de Locacao de Usina Fotovoltaica", 0, 1, 'C')
+    yp = y_steps + 32; pdf.set_xy(0, yp); pdf.set_font("Arial", "B", 13); pdf.set_text_color(*PDF_BLUE); pdf.cell(0, 8, "Proposta Comercial de Locação de Usina Fotovoltaica", 0, 1, 'C')
     yb = pdf.get_y() + 2; 
     pdf.set_fill_color(*PDF_GRAY); pdf.set_draw_color(*PDF_BLUE); pdf.set_line_width(0.5)
     pdf.rect(13, yb, 184, 12, 'FD')
     pdf.set_xy(15, yb + 3); pdf.set_font("Arial", "B", 10); pdf.set_text_color(*PDF_BLUE)
-    texto_uc = f"N cliente {uc}" if uc else "N cliente"
+    texto_uc = f"Nº cliente {uc}" if uc else "Nº cliente"
     pdf.cell(40, 6, texto_uc, 0, 1)
 
     yc = yb + 18; wc = 58; hc = 30; xc = 13; espaco = 5
     
-    # Card 1 - Media
+    # Card 1 - Média
     pdf.set_draw_color(*PDF_BLUE); pdf.set_line_width(0.5); pdf.rect(xc, yc, wc, hc, 'D')
     pdf.set_fill_color(*PDF_BLUE); pdf.rect(xc, yc, wc, 8, 'F')
-    pdf.set_xy(xc, yc + 1); pdf.set_font("Arial", "B", 9); pdf.set_text_color(255); pdf.cell(wc, 6, "Media* (R$)", 0, 2, 'C')
-    pdf.set_font("Arial", "", 7); pdf.set_text_color(100); pdf.set_xy(xc, yc + 10); pdf.cell(wc, 4, "(sem contratacao de GD)", 0, 2, 'C')
+    pdf.set_xy(xc, yc + 1); pdf.set_font("Arial", "B", 9); pdf.set_text_color(255); pdf.cell(wc, 6, "Média* (R$)", 0, 2, 'C')
+    pdf.set_font("Arial", "", 7); pdf.set_text_color(100); pdf.set_xy(xc, yc + 10); pdf.cell(wc, 4, "(sem contratação de GD)", 0, 2, 'C')
     pdf.set_font("Arial", "B", 14); pdf.set_text_color(*PDF_BLUE); pdf.set_xy(xc, yc + 18); pdf.cell(wc, 8, fmt_currency(d['total_atual']), 0, 0, 'C')
     
     # Card 2 - Desconto
@@ -248,8 +247,8 @@ def criar_pdf_visual_final(d, nome, cidade, dados_plano, desconto_final, uc):
     pdf.set_draw_color(*PDF_BLUE); pdf.rect(xc2, yc, wc, hc, 'D')
     pdf.set_fill_color(*PDF_BLUE); pdf.rect(xc2, yc, wc, 8, 'F')
     pdf.set_xy(xc2, yc + 1); pdf.set_font("Arial", "B", 9); pdf.set_text_color(255); pdf.cell(wc, 6, "Economia Ofertada", 0, 2, 'C')
-    pdf.set_font("Arial", "B", 10); pdf.set_text_color(*PDF_GOLD); pdf.set_xy(xc2, yc + 11); pdf.cell(wc, 6, f"Previa: {desconto_final:.1f}%", 0, 2, 'C')
-    pdf.set_font("Arial", "", 7); pdf.set_text_color(100); pdf.set_xy(xc2, yc + 17); pdf.cell(wc, 4, "% sobre credito compensado", 0, 0, 'C')
+    pdf.set_font("Arial", "B", 10); pdf.set_text_color(*PDF_GOLD); pdf.set_xy(xc2, yc + 11); pdf.cell(wc, 6, f"Prévia: {desconto_final:.1f}%", 0, 2, 'C')
+    pdf.set_font("Arial", "", 7); pdf.set_text_color(100); pdf.set_xy(xc2, yc + 17); pdf.cell(wc, 4, "% sobre crédito compensado", 0, 0, 'C')
     
     # Card 3 - Economia Projetada
     xc3 = xc2 + wc + espaco
@@ -259,18 +258,18 @@ def criar_pdf_visual_final(d, nome, cidade, dados_plano, desconto_final, uc):
     pdf.set_font("Arial", "B", 12); pdf.set_text_color(*PDF_GOLD)
     pdf.set_xy(xc3, yc + 10); pdf.cell(wc, 8, f"Ano: {fmt_currency(d['econ_ano'])}", 0, 0, 'C')
     pdf.set_font("Arial", "B", 10); pdf.set_text_color(80)
-    pdf.set_xy(xc3, yc + 18); pdf.cell(wc, 8, f"Mes: {fmt_currency(d['econ_mes'])}", 0, 0, 'C')
+    pdf.set_xy(xc3, yc + 18); pdf.cell(wc, 8, f"Mês: {fmt_currency(d['econ_mes'])}", 0, 0, 'C')
 
     # Quadro Total a Pagar
     y2 = yc + hc + 5
     pdf.set_draw_color(180, 180, 180); pdf.rect(13, y2, 57, 18)
-    pdf.set_xy(13, y2 + 2); pdf.set_font("Arial", "B", 8); pdf.set_text_color(100); pdf.cell(57, 4, "Fatura Concessionaria", 0, 2, 'C')
+    pdf.set_xy(13, y2 + 2); pdf.set_font("Arial", "B", 8); pdf.set_text_color(100); pdf.cell(57, 4, "Fatura Concessionária", 0, 2, 'C')
     pdf.set_font("Arial", "B", 11); pdf.set_text_color(*PDF_BLUE); pdf.cell(57, 8, fmt_currency(d['fat_en']), 0, 0, 'C')
 
     pdf.set_xy(70, y2 + 7); pdf.set_font("Arial", "B", 12); pdf.set_text_color(100); pdf.cell(6, 4, "+", 0, 0, 'C')
 
     pdf.rect(76, y2, 57, 18)
-    pdf.set_xy(76, y2 + 2); pdf.set_font("Arial", "B", 8); pdf.set_text_color(100); pdf.cell(57, 4, "Fatura Locacao", 0, 2, 'C')
+    pdf.set_xy(76, y2 + 2); pdf.set_font("Arial", "B", 8); pdf.set_text_color(100); pdf.cell(57, 4, "Fatura Locação", 0, 2, 'C')
     pdf.set_font("Arial", "B", 11); pdf.set_text_color(*PDF_BLUE); pdf.cell(57, 8, fmt_currency(d['fat_re']), 0, 0, 'C')
 
     pdf.set_xy(133, y2 + 7); pdf.set_font("Arial", "B", 12); pdf.set_text_color(100); pdf.cell(6, 4, "=", 0, 0, 'C')
@@ -282,11 +281,11 @@ def criar_pdf_visual_final(d, nome, cidade, dados_plano, desconto_final, uc):
     # Observação
     y_obs = y2 + 20
     pdf.set_xy(13, y_obs); pdf.set_font("Arial", "I", 7); pdf.set_text_color(100)
-    obs_text = "Observacao: O novo valor total a pagar apresentado e uma estimativa elaborada exclusivamente com base no volume de consumo (kWh) da fatura disponibilizada para analise, podendo sofrer variacoes de acordo com o consumo real e tarifas vigentes no mes de faturamento."
+    obs_text = "Observação: O novo valor total a pagar apresentado é uma estimativa elaborada exclusivamente com base no volume de consumo (kWh) da fatura disponibilizada para análise, podendo sofrer variações de acordo com o consumo real e tarifas vigentes no mês de faturamento."
     pdf.multi_cell(184, 3.5, obs_text, 0, 'J')
 
     pdf.set_y(y_obs + 8); pdf.set_font("Arial", "B", 10); pdf.set_text_color(*PDF_BLUE)
-    pdf.cell(0, 6, f"Cota necessaria: {fmt_number(d['kwh_re'])} kWh, equivalente a {d['qtd_placas']} placas solares.", 0, 1, 'C')
+    pdf.cell(0, 6, f"Cota necessária: {fmt_number(d['kwh_re'])} kWh, equivalente a {d['qtd_placas']} painéis solares.", 0, 1, 'C')
 
     data_atual = datetime.now().strftime("%d/%m/%Y")
     pdf.set_y(260); pdf.set_draw_color(*PDF_BLUE); pdf.set_line_width(0.5); pdf.rect(13, 260, 184, 18, 'D')
@@ -296,7 +295,7 @@ def criar_pdf_visual_final(d, nome, cidade, dados_plano, desconto_final, uc):
     pdf.set_x(15); pdf.set_font("Arial", "B", 8); pdf.set_text_color(*PDF_BLUE); pdf.cell(15, 5, "Cidade:", 0, 0)
     pdf.set_font("Arial", "", 8); pdf.set_text_color(50); pdf.cell(50, 5, f"{cidade.upper()}", 0, 1)
     
-    pdf.set_xy(13, 272); pdf.set_font("Arial", "I", 8); pdf.set_text_color(100); pdf.cell(184, 5, f"Data da simulacao: {data_atual} | Validade da proposta: 10 dias, sujeita a analise de credito.", 0, 1, 'C')
+    pdf.set_xy(13, 272); pdf.set_font("Arial", "I", 8); pdf.set_text_color(100); pdf.cell(184, 5, f"Data da simulação: {data_atual} | Validade da proposta: 10 dias, sujeita à análise de crédito.", 0, 1, 'C')
 
     return pdf.output(dest='S').encode('latin-1')
 
