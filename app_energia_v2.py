@@ -243,7 +243,10 @@ def criar_pdf_visual_final(d, nome, cidade, dados_plano, desconto_final, uc):
     pdf.set_fill_color(*PDF_BLUE); pdf.rect(xc2, yc, wc, 8, 'F')
     pdf.set_xy(xc2, yc + 1); pdf.set_font("Arial", "B", 9); pdf.set_text_color(255); pdf.cell(wc, 6, "Economia Ofertada", 0, 2, 'C')
     pdf.set_font("Arial", "B", 10); pdf.set_text_color(*PDF_GOLD); pdf.set_xy(xc2, yc + 11); pdf.cell(wc, 6, f"Prévia: {desconto_final:.1f}%", 0, 2, 'C')
-    pdf.set_font("Arial", "", 7); pdf.set_text_color(100); pdf.set_xy(xc2, yc + 17); pdf.cell(wc, 4, "% sobre crédito compensado", 0, 0, 'C')
+    
+    # Texto dinâmico informando a isenção de ICMS no PDF
+    texto_icms = "(Inclui +17% Isenção ICMS)" if desconto_final > dados_plano['desc'] else "% sobre crédito compensado"
+    pdf.set_font("Arial", "", 7); pdf.set_text_color(100); pdf.set_xy(xc2, yc + 17); pdf.cell(wc, 4, texto_icms, 0, 0, 'C')
     
     # Card 3 - Economia Projetada
     xc3 = xc2 + wc + espaco
@@ -295,6 +298,10 @@ def criar_pdf_visual_final(d, nome, cidade, dados_plano, desconto_final, uc):
     return pdf.output(dest='S').encode('latin-1')
 
 # --- 4. INTERFACE DO SITE ---
+# Memória Inteligente (Session State)
+if 'mostrar_resultado' not in st.session_state:
+    st.session_state.mostrar_resultado = False
+
 st.markdown(f"<div style='text-align: center;'><img src='{LOGO_URL}' width='250'></div>", unsafe_allow_html=True)
 st.markdown(f"<h2 style='text-align: center; color: {PRIMARY_GOLD} !important; margin-top: 15px;'>Simulador de Inteligência Energética</h2>", unsafe_allow_html=True)
 st.write("---")
@@ -316,6 +323,10 @@ with st.container():
     ban = c6.number_input("Bandeiras (R$)", min_value=0.0, value=None, placeholder="Ex: 0.00")
     ilum = c7.number_input("Ilum. Púb. (R$)", min_value=0.0, value=None, placeholder="Ex: 0.00")
 
+    # Limpa a tela se o kWh for apagado
+    if kwh is None or kwh == 0:
+        st.session_state.mostrar_resultado = False
+
     # --- PAINEL ÓRIGO DINÂMICO ---
     st.write("---")
     st.markdown("### 🎯 3. Condições Comerciais Órigo")
@@ -327,7 +338,8 @@ with st.container():
     plano_selecionado = c_plano.selectbox("Selecione a Tabela (Libera de acordo com o kWh)", nomes_planos)
     dados_plano = next(p for p in planos if p["nome"] == plano_selecionado)
     
-    icms_opcao = c_icms.radio("Isenção/Devolução de ICMS (+17%)", ["Aplicar Isenção", "Não Aplicar"], horizontal=True)
+    # Botão ICMS começa desmarcado para mostrar o impacto na hora
+    icms_opcao = c_icms.radio("Isenção/Devolução de ICMS (+17%)", ["Aplicar Isenção", "Não Aplicar"], horizontal=True, index=1)
     is_icms = (icms_opcao == "Aplicar Isenção")
     
     desconto_final = dados_plano["desc"] + (17.0 if is_icms and dados_plano["desc"] > 0 else 0.0)
@@ -345,62 +357,65 @@ with st.container():
         elif dados_plano["desc"] == 0:
             st.error("⚠️ Preencha o Consumo (kWh) para carregar as opções da Tabela Órigo.")
         else:
-            res = calcular(kwh, val_unit, tipo, ban, ilum, desconto_final)
-            st.write("---")
-            st.markdown("### 📊 Resultado da Simulação")
-            
+            st.session_state.mostrar_resultado = True
+
+    if st.session_state.mostrar_resultado and kwh and dados_plano["desc"] > 0:
+        res = calcular(kwh, val_unit, tipo, ban, ilum, desconto_final)
+        st.write("---")
+        st.markdown("### 📊 Resultado da Simulação (Atualizado ao Vivo)")
+        
+        st.markdown(f"""
+        <div class="card-result card-red">
+            <div class="label-text">1. Fatura Atual Sem Desconto</div>
+            <div class="big-number" style="color: {PRIMARY_GOLD} !important;">{fmt_currency(res['total_atual'])}</div>
+            <p style="font-size:12px; margin:0;">Custo estimado mantendo a distribuidora</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        c_res1, c_res2, c_res3 = st.columns(3)
+        with c_res1:
             st.markdown(f"""
-            <div class="card-result card-red">
-                <div class="label-text">1. Fatura Atual Sem Desconto</div>
-                <div class="big-number" style="color: {PRIMARY_GOLD} !important;">{fmt_currency(res['total_atual'])}</div>
-                <p style="font-size:12px; margin:0;">Custo estimado mantendo a distribuidora</p>
+            <div class="card-result card-blue" style="height: 155px;">
+                <div class="label-text">2. Fatura Concessionária</div>
+                <div class="big-number" style="font-size: 18px;">{fmt_currency(res['fat_en'])}</div>
+                <p style="font-size:11px; margin-top:5px;">(Custo Disp. + Ilum + Band)</p>
+            </div>
+            """, unsafe_allow_html=True)
+        with c_res2:
+            st.markdown(f"""
+            <div class="card-result card-blue" style="height: 155px;">
+                <div class="label-text">3. Fatura Locação</div>
+                <div class="big-number" style="font-size: 18px;">{fmt_currency(res['fat_re'])}</div>
+                <p style="font-size:11px; margin-top:5px;">(Energia Limpa com Desconto)</p>
+            </div>
+            """, unsafe_allow_html=True)
+        with c_res3:
+             st.markdown(f"""
+            <div class="card-result card-blue" style="height: 155px; border-top: 5px solid {SUCCESS_GREEN};">
+                <div class="label-text">4. Novo Total a Pagar</div>
+                <div class="big-number" style="font-size: 20px; color: {SUCCESS_GREEN} !important;">{fmt_currency(res['total_novo'])}</div>
+                <p style="font-size:11px; margin-top:5px;">Soma dos itens 2 e 3</p>
             </div>
             """, unsafe_allow_html=True)
 
-            c_res1, c_res2, c_res3 = st.columns(3)
-            with c_res1:
-                st.markdown(f"""
-                <div class="card-result card-blue" style="height: 155px;">
-                    <div class="label-text">2. Fatura Concessionária</div>
-                    <div class="big-number" style="font-size: 18px;">{fmt_currency(res['fat_en'])}</div>
-                    <p style="font-size:11px; margin-top:5px;">(Custo Disp. + Ilum + Band)</p>
-                </div>
-                """, unsafe_allow_html=True)
-            with c_res2:
-                st.markdown(f"""
-                <div class="card-result card-blue" style="height: 155px;">
-                    <div class="label-text">3. Fatura Locação</div>
-                    <div class="big-number" style="font-size: 18px;">{fmt_currency(res['fat_re'])}</div>
-                    <p style="font-size:11px; margin-top:5px;">(Energia Limpa com Desconto)</p>
-                </div>
-                """, unsafe_allow_html=True)
-            with c_res3:
-                 st.markdown(f"""
-                <div class="card-result card-blue" style="height: 155px; border-top: 5px solid {SUCCESS_GREEN};">
-                    <div class="label-text">4. Novo Total a Pagar</div>
-                    <div class="big-number" style="font-size: 20px; color: {SUCCESS_GREEN} !important;">{fmt_currency(res['total_novo'])}</div>
-                    <p style="font-size:11px; margin-top:5px;">Soma dos itens 2 e 3</p>
-                </div>
-                """, unsafe_allow_html=True)
+        st.markdown(f"""
+        <div class="card-result card-green">
+            <div style="font-size: 14px; font-weight:700; letter-spacing: 1px; margin-bottom: 10px;">💰 ECONOMIA ESTIMADA COM A EFICIENCIE</div>
+            <div style="font-size: 38px; font-weight: 900; margin-bottom: 5px;" class="highlight">{fmt_currency(res['econ_ano'])} <span style="font-size:16px; font-weight:normal; color:#ddd;">/ano</span></div>
+            <div style="font-size: 18px; font-weight: 600; color: #FFFFFF !important;">{fmt_currency(res['econ_mes'])} <span style="font-size:14px; font-weight:normal; color:#ccc;">/mês</span></div>
+        </div>
+        """, unsafe_allow_html=True)
 
-            st.markdown(f"""
-            <div class="card-result card-green">
-                <div style="font-size: 14px; font-weight:700; letter-spacing: 1px; margin-bottom: 10px;">💰 ECONOMIA ESTIMADA COM A EFICIENCIE</div>
-                <div style="font-size: 38px; font-weight: 900; margin-bottom: 5px;" class="highlight">{fmt_currency(res['econ_ano'])} <span style="font-size:16px; font-weight:normal; color:#ddd;">/ano</span></div>
-                <div style="font-size: 18px; font-weight: 600; color: #FFFFFF !important;">{fmt_currency(res['econ_mes'])} <span style="font-size:14px; font-weight:normal; color:#ccc;">/mês</span></div>
-            </div>
-            """, unsafe_allow_html=True)
+        c_tec1, c_tec2 = st.columns(2)
+        with c_tec1: st.info(f"⚡ **Cota Necessária:** {fmt_number(res['kwh_re'])} kWh")
+        with c_tec2: st.info(f"☀️ **Equipamento:** {res['qtd_placas']} Placas")
 
-            c_tec1, c_tec2 = st.columns(2)
-            with c_tec1: st.info(f"⚡ **Cota Necessária:** {fmt_number(res['kwh_re'])} kWh")
-            with c_tec2: st.info(f"☀️ **Equipamento:** {res['qtd_placas']} Placas")
-
-            st.write("")
-            pdf_bytes = criar_pdf_visual_final(res, nome, cidade, dados_plano, desconto_final, uc)
-            st.download_button(
-                label="⬇️ GERAR PROPOSTA COMERCIAL (PDF)", 
-                data=pdf_bytes, 
-                file_name=f"Proposta_Eficiencie_{nome.split()[0] if nome else 'Cliente'}.pdf", 
-                mime="application/pdf", 
-                use_container_width=True
-            )
+        st.write("")
+        pdf_bytes = criar_pdf_visual_final(res, nome, cidade, dados_plano, desconto_final, uc)
+        st.download_button(
+            label="⬇️ GERAR PROPOSTA COMERCIAL (PDF)", 
+            data=pdf_bytes, 
+            file_name=f"Proposta_Eficiencie_{nome.split()[0] if nome else 'Cliente'}.pdf", 
+            mime="application/pdf", 
+            use_container_width=True
+        )
