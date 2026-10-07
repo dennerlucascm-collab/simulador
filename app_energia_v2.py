@@ -9,15 +9,15 @@ from datetime import datetime
 # --- 1. CONFIGURAÇÕES VISUAIS ---
 st.set_page_config(page_title="Simulador Eficiencie", page_icon="☀️", layout="centered")
 
-# NOVA PALETA DE CORES EFICIENCIE (Baseado na logo: Azul Escuro e Vermelho)
+# NOVA PALETA DE CORES GESTÃO EMPRESARIAL (Azul Marinho e Dourado)
 BG_COLOR = "#F4F7F6"         
-PRIMARY_BLUE = "#0a3a64"     
-PRIMARY_RED = "#d31212"      
+PRIMARY_BLUE = "#0A1B35"     # Azul Marinho profundo da nova logo
+PRIMARY_GOLD = "#DE9E26"     # Dourado/Amarelo ouro das barras
 TEXT_COLOR = "#2C3E50"
 SUCCESS_GREEN = "#27ae60"
 
-# LINK DA NOVA LOGO ATUALIZADO
-LOGO_URL = "https://i.postimg.cc/ZKZM7b3j/logo-eficiencie-removebg-preview.png"
+# ⚠️ ATENÇÃO: Cole aqui o link da sua logo nova COM FUNDO TRANSPARENTE (.png)
+LOGO_URL = "COLE_O_SEU_LINK_AQUI"
 
 # Ícones Icons8
 ICON_SOLAR = "https://img.icons8.com/ios-filled/50/ffffff/solar-panel.png"
@@ -30,8 +30,8 @@ ICONS_LIST = [ICON_SOLAR, ICON_PIGGY, ICON_BULB, ICON_PLANT, ICON_FILE]
 ICONS_FALLBACK = ["S", "$", "!", "Y", "V"] 
 
 # Cores para o PDF
-PDF_BLUE = (10, 58, 100)
-PDF_RED = (211, 18, 18)
+PDF_BLUE = (10, 27, 53)
+PDF_GOLD = (222, 158, 38)
 PDF_GRAY = (240, 240, 240)
 
 def fmt_currency(val): return f"R$ {val:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
@@ -53,23 +53,23 @@ st.markdown(f"""
     }}
     
     div.stButton > button {{ 
-        background-color: {PRIMARY_RED} !important; 
-        color: #ffffff !important; 
+        background-color: {PRIMARY_GOLD} !important; 
+        color: {PRIMARY_BLUE} !important; 
         border-radius: 8px; 
         height: 55px; 
-        font-weight: 800; 
+        font-weight: 900; 
         font-size: 16px;
         text-transform: uppercase; 
         border: none; 
         width: 100%;
-        box-shadow: 0 4px 6px rgba(211, 18, 18, 0.3);
+        box-shadow: 0 4px 6px rgba(222, 158, 38, 0.3);
         transition: all 0.3s ease;
     }}
     div.stButton > button:hover {{
-        background-color: #a80f0f !important;
-        box-shadow: 0 6px 8px rgba(211, 18, 18, 0.4);
+        background-color: #c48a20 !important;
+        box-shadow: 0 6px 8px rgba(222, 158, 38, 0.4);
     }}
-    div.stButton > button p {{ color: #ffffff !important; font-size: 16px; }}
+    div.stButton > button p {{ color: {PRIMARY_BLUE} !important; font-size: 16px; font-weight: 900; }}
     
     .card-result {{ 
         padding: 20px; 
@@ -79,15 +79,15 @@ st.markdown(f"""
         box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
         background-color: white; 
     }}
-    .card-red {{ border-top: 5px solid {PRIMARY_RED}; }}
+    .card-red {{ border-top: 5px solid {PRIMARY_GOLD}; }}
     .card-blue {{ border-top: 5px solid {PRIMARY_BLUE}; }}
     
     .card-green {{ 
-        background: linear-gradient(135deg, {PRIMARY_BLUE}, #12548c) !important; 
-        box-shadow: 0 8px 20px rgba(10, 58, 100, 0.2);
+        background: linear-gradient(135deg, {PRIMARY_BLUE}, #0f2a52) !important; 
+        box-shadow: 0 8px 20px rgba(10, 27, 53, 0.2);
     }}
     .card-green div, .card-green h2, .card-green p, .card-green span {{ color: #ffffff !important; }}
-    .card-green .highlight {{ color: #f1c40f !important; font-weight: 900; }} 
+    .card-green .highlight {{ color: {PRIMARY_GOLD} !important; font-weight: 900; }} 
     
     .big-number {{ font-size: 24px; font-weight: 800; margin: 8px 0; color: {PRIMARY_BLUE} !important; }}
     .label-text {{ font-size: 13px; font-weight: 700; text-transform: uppercase; color: #7F8C8D !important; letter-spacing: 0.5px; }}
@@ -125,18 +125,21 @@ def calcular(kwh_total, valor_unit, tipo, bandeira, ilum, desc):
         "kwh_re": kwh_re, "qtd_placas": qtd_placas
     }
 
-# --- 3. PDF PREMIUM EFICIENCIE (CORRIGIDO E ALINHADO) ---
+# --- 3. PDF PREMIUM EFICIENCIE (CORRIGIDO E COM ACENTOS) ---
 class PDFOficial(FPDF):
     def header(self):
-        self.set_fill_color(255, 255, 255)
+        # Fundo do cabeçalho Azul Marinho
+        self.set_fill_color(*PDF_BLUE)
         self.rect(0, 0, 210, 45, 'F')
         
-        self.set_fill_color(*PDF_RED)
+        # Filete Dourado de acabamento
+        self.set_fill_color(*PDF_GOLD)
         self.rect(0, 44, 210, 1.5, 'F')
         
         headers = {'User-Agent': 'Mozilla/5.0'}
         
         def safe_image(url, x, y, w):
+            if url == "COLE_O_SEU_LINK_AQUI": return
             try:
                 r = requests.get(url, headers=headers, timeout=5)
                 if r.status_code == 200:
@@ -149,7 +152,7 @@ class PDFOficial(FPDF):
         
         self.set_y(20)
         self.set_font("Arial", "B", 14)
-        self.set_text_color(*PDF_BLUE)
+        self.set_text_color(255, 255, 255) # Texto Branco para destacar no Azul Marinho
         self.cell(0, 5, "ESTUDO DE VIABILIDADE ECONOMICA", 0, 1, 'R')
 
     def footer(self):
@@ -164,11 +167,12 @@ def criar_pdf_visual_final(d, nome, cidade, desconto, uc):
     pdf = PDFOficial(); pdf.set_auto_page_break(auto=True, margin=15); pdf.add_page()
     headers = {'User-Agent': 'Mozilla/5.0'}
     
-    pdf.set_y(52); pdf.set_font("Arial", "B", 12); pdf.set_text_color(*PDF_RED)
+    # Subtítulo Dourado com acentos
+    pdf.set_y(52); pdf.set_font("Arial", "B", 12); pdf.set_text_color(*PDF_GOLD)
     pdf.cell(0, 8, "Energia solar sem investimento? Saiba como isso e possivel.", 0, 1, 'C')
-    pdf.set_draw_color(*PDF_RED); pdf.line(15, 61, 195, 61)
+    pdf.set_draw_color(*PDF_GOLD); pdf.line(15, 61, 195, 61)
     
-    # Ícones
+    # Ícones com acentos
     pdf.ln(6); pdf.set_font("Arial", "B", 11); pdf.set_text_color(*PDF_BLUE)
     pdf.cell(0, 6, "Conheca os beneficios da Geracao Compartilhada:", 0, 1, 'C')
     y_icons = pdf.get_y() + 4; centers = [25, 65, 105, 145, 185]
@@ -192,7 +196,7 @@ def criar_pdf_visual_final(d, nome, cidade, desconto, uc):
             pdf.cell(18, 8, ICONS_FALLBACK[i], 0, 0, 'C'); pdf.set_text_color(80); pdf.set_font("Arial", "", 7)
         pdf.set_xy(cx-16, y_icons + 20); pdf.multi_cell(32, 3.5, t, 0, 'C')
 
-    # Como Funciona
+    # Como Funciona com acentos
     y_steps = y_icons + 38; pdf.set_xy(0, y_steps - 6); pdf.set_font("Arial", "B", 11); pdf.set_text_color(*PDF_BLUE); pdf.cell(0, 6, "Veja como funciona:", 0, 1, 'C')
     steps = ["1. Nos instalamos os paineis solares nas nossas usinas", "2. A luz solar e convertida em energia eletrica", "3. Voce adquire uma cota de acordo com seu consumo", "4. A energia injetada vira credito na sua conta"]
     bw = 42; sx = 13; gp = 4; pdf.set_font("Arial", "", 8); pdf.set_text_color(255)
@@ -200,7 +204,7 @@ def criar_pdf_visual_final(d, nome, cidade, desconto, uc):
         cx = sx + (i * (bw + gp)); pdf.set_fill_color(*PDF_BLUE); pdf.rect(cx, y_steps, bw, 22, 'F')
         pdf.set_xy(cx + 2, y_steps + 3); pdf.multi_cell(bw - 4, 4, t, 0, 'C')
 
-    # Titulo e Dados Resumo
+    # Titulo e Dados Resumo com acentos
     yp = y_steps + 32; pdf.set_xy(0, yp); pdf.set_font("Arial", "B", 13); pdf.set_text_color(*PDF_BLUE); pdf.cell(0, 8, "Proposta Comercial de Locacao de Usina Fotovoltaica", 0, 1, 'C')
     yb = pdf.get_y() + 2; 
     pdf.set_fill_color(*PDF_GRAY); pdf.set_draw_color(*PDF_BLUE); pdf.set_line_width(0.5)
@@ -224,16 +228,16 @@ def criar_pdf_visual_final(d, nome, cidade, desconto, uc):
     pdf.set_draw_color(*PDF_BLUE); pdf.rect(xc2, yc, wc, hc, 'D')
     pdf.set_fill_color(*PDF_BLUE); pdf.rect(xc2, yc, wc, 8, 'F')
     pdf.set_xy(xc2, yc + 1); pdf.set_font("Arial", "B", 9); pdf.set_text_color(255); pdf.cell(wc, 6, "Economia Ofertada", 0, 2, 'C')
-    pdf.set_font("Arial", "B", 9); pdf.set_text_color(*PDF_RED); pdf.set_xy(xc2, yc + 11); pdf.cell(wc, 6, f"Previo: {desconto:.1f}%", 0, 2, 'C')
+    pdf.set_font("Arial", "B", 9); pdf.set_text_color(*PDF_GOLD); pdf.set_xy(xc2, yc + 11); pdf.cell(wc, 6, f"Previa: {desconto:.1f}%", 0, 2, 'C')
     pdf.set_font("Arial", "", 7); pdf.set_text_color(100); pdf.set_xy(xc2, yc + 17); pdf.cell(wc, 4, "% sobre credito compensado", 0, 0, 'C')
     
-    # Card 3 - Economia Projetada (AGORA COM MENSAL E ANUAL)
+    # Card 3 - Economia Projetada (Destaque Dourado)
     xc3 = xc2 + wc + espaco
-    pdf.set_draw_color(*PDF_RED); pdf.rect(xc3, yc, wc, hc, 'D')
-    pdf.set_fill_color(*PDF_RED); pdf.rect(xc3, yc, wc, 8, 'F')
-    pdf.set_xy(xc3, yc + 1); pdf.set_font("Arial", "B", 9); pdf.set_text_color(255); pdf.cell(wc, 6, "Economia Projetada", 0, 2, 'C')
+    pdf.set_draw_color(*PDF_GOLD); pdf.rect(xc3, yc, wc, hc, 'D')
+    pdf.set_fill_color(*PDF_GOLD); pdf.rect(xc3, yc, wc, 8, 'F')
+    pdf.set_xy(xc3, yc + 1); pdf.set_font("Arial", "B", 9); pdf.set_text_color(*PDF_BLUE); pdf.cell(wc, 6, "Economia Projetada", 0, 2, 'C')
     
-    pdf.set_font("Arial", "B", 12); pdf.set_text_color(*PDF_RED)
+    pdf.set_font("Arial", "B", 12); pdf.set_text_color(*PDF_GOLD)
     pdf.set_xy(xc3, yc + 10); pdf.cell(wc, 8, f"Ano: {fmt_currency(d['econ_ano'])}", 0, 0, 'C')
     
     pdf.set_font("Arial", "B", 10); pdf.set_text_color(80)
@@ -241,7 +245,7 @@ def criar_pdf_visual_final(d, nome, cidade, desconto, uc):
 
     # Cota Necessária
     pdf.set_y(yc + hc + 8); pdf.set_font("Arial", "B", 10); pdf.set_text_color(*PDF_BLUE)
-    pdf.cell(0, 6, f"Cota necessaria: {fmt_number(d['kwh_re'])} KWh, equivalente a {d['qtd_placas']} placas solares.", 0, 1, 'C')
+    pdf.cell(0, 6, f"Cota necessaria: {fmt_number(d['kwh_re'])} kWh, equivalente a {d['qtd_placas']} placas solares.", 0, 1, 'C')
 
     # Rodapé de Dados
     data_atual = datetime.now().strftime("%d/%m/%Y")
@@ -257,7 +261,9 @@ def criar_pdf_visual_final(d, nome, cidade, desconto, uc):
     return pdf.output(dest='S').encode('latin-1')
 
 # --- 4. INTERFACE DO SITE ---
-st.markdown(f"<div style='text-align: center;'><img src='{LOGO_URL}' width='250'></div>", unsafe_allow_html=True)
+# Exibe a logo no site apenas se houver um link válido inserido
+if LOGO_URL != "COLE_O_SEU_LINK_AQUI":
+    st.markdown(f"<div style='text-align: center;'><img src='{LOGO_URL}' width='250'></div>", unsafe_allow_html=True)
 st.markdown(f"<h2 style='text-align: center; color: {PRIMARY_BLUE}; margin-top: 15px;'>Simulador de Inteligência Energética</h2>", unsafe_allow_html=True)
 st.write("---")
 
@@ -272,7 +278,7 @@ with st.container():
     c_uc, c4, c5 = st.columns(3)
     uc = c_uc.text_input("UC (Unidade Consumidora)", value="", placeholder="Ex: 123456")
     kwh = c4.number_input("Consumo (kWh)", min_value=0.0, value=None, placeholder="Digite o kWh...")
-    val_unit = c5.number_input("Valor Unitário (R$)", min_value=0.0, value=1.3098, format="%.4f")
+    val_unit = c5.number_input("Valor Unitário (R$)", min_value=0.0, value=1.1540, format="%.4f")
     
     c6, c7, c8 = st.columns(3)
     ban = c6.number_input("Bandeiras (R$)", min_value=0.0, value=None, placeholder="R$ 0,00")
@@ -291,7 +297,7 @@ with st.container():
             st.markdown(f"""
             <div class="card-result card-red">
                 <div class="label-text">1. Fatura Atual Sem Desconto</div>
-                <div class="big-number" style="color: {PRIMARY_RED} !important;">{fmt_currency(res['total_atual'])}</div>
+                <div class="big-number" style="color: {PRIMARY_GOLD} !important;">{fmt_currency(res['total_atual'])}</div>
                 <p style="font-size:12px; margin:0; color:#888 !important;">Custo estimado mantendo a distribuidora</p>
             </div>
             """, unsafe_allow_html=True)
@@ -326,7 +332,7 @@ with st.container():
             <div class="card-result card-green">
                 <div style="font-size: 14px; font-weight:700; letter-spacing: 1px; margin-bottom: 10px;">💰 ECONOMIA ESTIMADA COM A EFICIENCIE</div>
                 <div style="font-size: 38px; font-weight: 900; margin-bottom: 5px;" class="highlight">{fmt_currency(res['econ_ano'])} <span style="font-size:16px; font-weight:normal; color:#ddd;">/ano</span></div>
-                <div style="font-size: 18px; font-weight: 600;">{fmt_currency(res['econ_mes'])} <span style="font-size:14px; font-weight:normal; color:#ccc;">/mês</span></div>
+                <div style="font-size: 18px; font-weight: 600; color: {PRIMARY_GOLD} !important;">{fmt_currency(res['econ_mes'])} <span style="font-size:14px; font-weight:normal; color:#ccc;">/mês</span></div>
             </div>
             """, unsafe_allow_html=True)
 
