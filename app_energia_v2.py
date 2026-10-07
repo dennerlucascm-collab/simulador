@@ -85,25 +85,24 @@ st.markdown(f"""
 # --- 2. MOTOR DA TABELA ÓRIGO AUTOMATIZADA ---
 def obter_planos(kwh_val):
     if kwh_val is None or kwh_val == 0:
-        return [{"nome": "⚠️ Preencha o Consumo (kWh) primeiro...", "desc": 0, "fid": "-", "aviso": "-", "unica": "-"}]
+        return [{"nome": "⚠️ Preencha o Consumo (kWh) primeiro...", "desc": 0, "fid": "-", "aviso": "-"}]
         
     k = float(kwh_val)
-    if k <= 1000:
+    if k < 1000:
         return [
-            {"nome": "10% | Sem Fidelidade | Aviso 120 dias", "desc": 10, "fid": "NÃO", "aviso": "120 DIAS", "unica": "NÃO"},
-            {"nome": "16% | Sem Fidelidade | Aviso 180 dias", "desc": 16, "fid": "NÃO", "aviso": "180 DIAS", "unica": "NÃO"},
-            {"nome": "18% | Fidelidade 1 Ano | Aviso 180 dias", "desc": 18, "fid": "1 ANO", "aviso": "180 DIAS", "unica": "NÃO"}
+            {"nome": "10% | Sem Fidelidade | Aviso 120 dias", "desc": 10, "fid": "NÃO", "aviso": "120 DIAS"},
+            {"nome": "16% | Sem Fidelidade | Aviso 180 dias", "desc": 16, "fid": "NÃO", "aviso": "180 DIAS"},
+            {"nome": "18% | Fidelidade 1 Ano | Aviso 180 dias", "desc": 18, "fid": "1 ANO", "aviso": "180 DIAS"}
         ]
-    elif k <= 5000:
+    elif k < 5000:
         return [
-            {"nome": "12% | Sem Fidelidade | Aviso 180 dias", "desc": 12, "fid": "NÃO", "aviso": "180 DIAS", "unica": "NÃO"},
-            {"nome": "18% | Fidelidade 1 Ano | Aviso 180 dias", "desc": 18, "fid": "1 ANO", "aviso": "180 DIAS", "unica": "NÃO"},
-            {"nome": "22% | Fidelidade 1 Ano | Fatura Única", "desc": 22, "fid": "1 ANO", "aviso": "180 DIAS", "unica": "SIM"}
+            {"nome": "12% | Sem Fidelidade | Aviso 180 dias", "desc": 12, "fid": "NÃO", "aviso": "180 DIAS"},
+            {"nome": "18% | Fidelidade 1 Ano | Aviso 180 dias", "desc": 18, "fid": "1 ANO", "aviso": "180 DIAS"}
         ]
     else: 
         return [
-            {"nome": "20% | Sem Fidelidade | Aviso 180 dias", "desc": 20, "fid": "NÃO", "aviso": "180 DIAS", "unica": "NÃO"},
-            {"nome": "25% | Fidelidade 1 Ano | Aviso 180 dias", "desc": 25, "fid": "1 ANO", "aviso": "180 DIAS", "unica": "NÃO"}
+            {"nome": "20% | Sem Fidelidade | Aviso 180 dias", "desc": 20, "fid": "NÃO", "aviso": "180 DIAS"},
+            {"nome": "25% | Fidelidade 1 Ano | Aviso 180 dias", "desc": 25, "fid": "1 ANO", "aviso": "180 DIAS"}
         ]
 
 def calcular(kwh_total, valor_unit, tipo, bandeira, ilum, desc):
@@ -178,14 +177,10 @@ def criar_pdf_visual_final(d, nome, cidade, dados_plano, desconto_final, uc):
     pdf.cell(0, 6, "Conheça os benefícios da Geração Compartilhada:", 0, 1, 'C')
     y_icons = pdf.get_y() + 4; centers = [25, 65, 105, 145, 185]
     
-    # Texto dinâmico do ícone 5 (Fidelidade/Aviso Prévio) com acentuação correta
     if dados_plano['fid'] == "NÃO":
         txt_fid = "Sem fidelidade após\no cumprimento\ndo aviso prévio"
     else:
-        if dados_plano.get('unica') == "SIM":
-            txt_fid = f"Fidelidade: {dados_plano['fid'].title()}\nFatura Única"
-        else:
-            txt_fid = f"Fidelidade: {dados_plano['fid'].title()}\nAviso: {dados_plano['aviso'].title()}"
+        txt_fid = f"Fidelidade: {dados_plano['fid'].title()}\nAviso: {dados_plano['aviso'].title()}"
 
     txts = [
         "Sem instalação\nde equipamentos", 
