@@ -87,32 +87,16 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 2. MOTOR DA TABELA ÓRIGO (COM REGRA DE CORTE DE 5000 kWh) ---
+# --- 2. MOTOR DA TABELA ÓRIGO (SEM TRAVA DE CONSUMO) ---
 def obter_planos(kwh_val):
     if kwh_val is None or kwh_val == 0:
         return [{"nome": "⚠️ Preencha o Consumo (kWh) primeiro...", "desc": 0, "fid": "-", "aviso": "-"}]
         
-    k = float(kwh_val)
-    
-    # Se for 5000 ou mais, mostra APENAS os planos Premium (limpa os inferiores)
-    if k >= 5000:
-        planos = [
-            {"nome": "20% | Sem Fidelidade | Aviso 180 dias", "desc": 20, "fid": "NÃO", "aviso": "180 DIAS"},
-            {"nome": "25% | Fidelidade 1 Ano | Aviso 180 dias", "desc": 25, "fid": "1 ANO", "aviso": "180 DIAS"}
-        ]
-    else:
-        # Se for menor que 5000, carrega a base (Até 999)
-        planos = [
-            {"nome": "10% | Sem Fidelidade | Aviso 120 dias", "desc": 10, "fid": "NÃO", "aviso": "120 DIAS"},
-            {"nome": "16% | Sem Fidelidade | Aviso 180 dias", "desc": 16, "fid": "NÃO", "aviso": "180 DIAS"},
-            {"nome": "18% | Fidelidade 1 Ano | Aviso 180 dias", "desc": 18, "fid": "1 ANO", "aviso": "180 DIAS"}
-        ]
-        # E se for de 1000 até 4999, ganha também a opção de 12%
-        if k >= 1000:
-            planos.append({"nome": "12% | Sem Fidelidade | Aviso 180 dias", "desc": 12, "fid": "NÃO", "aviso": "180 DIAS"})
-        
-    # Retorna os planos ordenados da menor porcentagem para a maior
-    return sorted(planos, key=lambda x: x["desc"])
+    return [
+        {"nome": "20% | Sem Fidelidade", "desc": 20, "fid": "NÃO", "aviso": "180 DIAS"},
+        {"nome": "22% | Fidelidade 1 Ano", "desc": 22, "fid": "1 ANO", "aviso": "180 DIAS"},
+        {"nome": "25% | Fidelidade 3 Anos", "desc": 25, "fid": "3 ANOS", "aviso": "180 DIAS"}
+    ]
 
 def calcular(kwh_total, valor_unit, tipo, bandeira, ilum, desc):
     kwh_total = kwh_total if kwh_total else 0.0
@@ -338,7 +322,7 @@ with st.container():
     planos = obter_planos(kwh)
     nomes_planos = [p["nome"] for p in planos]
     
-    plano_selecionado = st.selectbox("Selecione a Tabela (Libera opções maiores pelo consumo)", nomes_planos)
+    plano_selecionado = st.selectbox("Selecione o Plano de Desconto", nomes_planos)
     dados_plano = next(p for p in planos if p["nome"] == plano_selecionado)
     
     desconto_final = dados_plano["desc"]
@@ -353,7 +337,7 @@ with st.container():
         if kwh is None or kwh == 0:
             st.error("⚠️ Por favor, informe o consumo (kWh) válido na Seção 2 para realizar o cálculo.")
         elif dados_plano["desc"] == 0:
-            st.error("⚠️ Preencha o Consumo (kWh) para carregar as opções da Tabela Órigo.")
+            st.error("⚠️ Preencha o Consumo (kWh) para carregar as opções de desconto.")
         else:
             st.session_state.mostrar_resultado = True
 
