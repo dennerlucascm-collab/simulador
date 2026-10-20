@@ -87,15 +87,15 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 2. MOTOR DA TABELA ÓRIGO (SEM TRAVA DE CONSUMO E AVISO DE 90 DIAS) ---
+# --- 2. MOTOR DA TABELA ÓRIGO (SEM TRAVA DE CONSUMO) ---
 def obter_planos(kwh_val):
     if kwh_val is None or kwh_val == 0:
         return [{"nome": "⚠️ Preencha o Consumo (kWh) primeiro...", "desc": 0, "fid": "-", "aviso": "-"}]
         
     return [
-        {"nome": "20% | Sem Fidelidade", "desc": 20, "fid": "Não", "aviso": "90 dias"},
-        {"nome": "22% | Fidelidade 1 Ano", "desc": 22, "fid": "1 Ano", "aviso": "90 dias"},
-        {"nome": "25% | Fidelidade 3 Anos", "desc": 25, "fid": "3 Anos", "aviso": "90 dias"}
+        {"nome": "20% | Sem Fidelidade | Aviso 90 dias", "desc": 20, "fid": "NÃO", "aviso": "90 Dias"},
+        {"nome": "22% | Fidelidade 1 Ano | Aviso 90 dias", "desc": 22, "fid": "1 Ano", "aviso": "90 Dias"},
+        {"nome": "25% | Fidelidade 3 Anos | Aviso 90 dias", "desc": 25, "fid": "3 Anos", "aviso": "90 Dias"}
     ]
 
 def calcular(kwh_total, valor_unit, tipo, bandeira, ilum, desc):
@@ -170,8 +170,8 @@ def criar_pdf_visual_final(d, nome, cidade, dados_plano, desconto_final, uc):
     pdf.cell(0, 6, "Conheça os benefícios da Geração Compartilhada:", 0, 1, 'C')
     y_icons = pdf.get_y() + 4; centers = [25, 65, 105, 145, 185]
     
-    if dados_plano['fid'] == "Não":
-        txt_fid = "Sem fidelidade após\no cumprimento\ndo aviso prévio"
+    if dados_plano['fid'] == "NÃO":
+        txt_fid = f"Sem Fidelidade\nAviso: {dados_plano['aviso']}"
     else:
         txt_fid = f"Fidelidade: {dados_plano['fid']}\nAviso: {dados_plano['aviso']}"
 
