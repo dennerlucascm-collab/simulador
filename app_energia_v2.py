@@ -87,7 +87,7 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 2. MOTOR DA TABELA ÓRIGO (SEM TRAVA DE CONSUMO) ---
+# --- 2. MOTOR DA TABELA (SEM TRAVA DE CONSUMO) ---
 def obter_planos(kwh_val):
     if kwh_val is None or kwh_val == 0:
         return [{"nome": "⚠️ Preencha o Consumo (kWh) primeiro...", "desc": 0, "fid": "-", "aviso": "-"}]
@@ -317,7 +317,7 @@ with st.container():
 
     # --- PAINEL ÓRIGO DINÂMICO ---
     st.write("---")
-    st.markdown("### 🎯 3. Condições Comerciais Órigo")
+    st.markdown("### 🎯 3. Condições Comerciais ")
     
     planos = obter_planos(kwh)
     nomes_planos = [p["nome"] for p in planos]
